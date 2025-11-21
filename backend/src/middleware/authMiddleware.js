@@ -12,7 +12,7 @@ export const authenticateToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_secret_key');
-    req.user = decoded;
+    req.user = { id: decoded.sub };
     next();
   } catch (error) {
     res.status(403).json({

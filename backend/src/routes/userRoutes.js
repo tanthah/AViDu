@@ -1,11 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import {
-  getUserProfile,
-  updateUserProfile,
-  uploadAvatar
-} from '../controllers/userController.js';
+import {getUserProfile, updateUserProfile, uploadAvatar} from '../controllers/userController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

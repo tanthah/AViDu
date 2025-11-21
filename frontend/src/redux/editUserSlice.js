@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import axios from '../api/axios';
 
 // Async thunks
 export const fetchUserProfile = createAsyncThunk(
   'user/fetchProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/api/users/profile', {
+      const response = await axios.get('/user/profile', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -22,7 +22,7 @@ export const updateUserProfile = createAsyncThunk(
   'user/updateProfile',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await axios.put('/api/users/profile', userData, {
+      const response = await axios.put('/user/profile', userData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -39,7 +39,7 @@ export const uploadAvatar = createAsyncThunk(
   'user/uploadAvatar',
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/api/users/avatar', formData, {
+      const response = await axios.post('/api/user/upload-avatar', formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data'
@@ -101,7 +101,7 @@ const userSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.updating = false;
-        state.user = action.payload;
+        state.user = action.payload.data;
         state.success = true;
         state.successMessage = 'Cập nhật thông tin thành công!';
       })
