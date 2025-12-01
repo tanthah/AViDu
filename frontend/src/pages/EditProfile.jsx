@@ -60,10 +60,7 @@ const EditProfile = () => {
         // Nếu là Cloudinary URL (bắt đầu với http/https)
         if (user.avatar.startsWith('http')) {
           setAvatarPreview(user.avatar);
-        } else {
-          // Nếu là local path (fallback cho data cũ)
-          setAvatarPreview(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}${user.avatar}`);
-        }
+        } 
       }
     }
   }, [user]);

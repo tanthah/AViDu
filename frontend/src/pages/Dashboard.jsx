@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Container, Alert } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   fetchLatestProducts,
   fetchBestSellers,
@@ -15,17 +15,19 @@ import './Dashboard.css'
 export default function Dashboard() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const location = useLocation() // ✅ Thêm để detect route changes
 
   const { user } = useSelector((s) => s.auth)
   const { latest, bestSellers, mostViewed, topDiscounts, loading, error } = useSelector((s) => s.products)
 
+  // ✅ FIX: Fetch products mỗi khi vào trang dashboard
   useEffect(() => {
-    // Fetch all product lists on mount
+    console.log('🔄 Dashboard mounted or route changed, fetching products...')
     dispatch(fetchLatestProducts())
     dispatch(fetchBestSellers())
     dispatch(fetchMostViewed())
     dispatch(fetchTopDiscounts())
-  }, [dispatch])
+  }, [dispatch, location.pathname]) // ✅ Thêm location.pathname vào dependency
 
   const handleLogout = () => {
     dispatch(logout())
