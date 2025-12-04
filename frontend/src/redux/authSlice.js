@@ -1,17 +1,51 @@
+// frontend/src/redux/authSlice.js - UPDATED VERSION
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from '../api/axios'
 
-// login thunk: posts credentials to /api/auth/login and expects { token, user }
+// Helper functions for localStorage
+const loadUserFromStorage = () => {
+  try {
+    const userStr = localStorage.getItem('user')
+    return userStr ? JSON.parse(userStr) : null
+  } catch (err) {
+    console.error('Error loading user from storage:', err)
+    return null
+  }
+}
+
+const saveUserToStorage = (user) => {
+  try {
+    localStorage.setItem('user', JSON.stringify(user))
+  } catch (err) {
+    console.error('Error saving user to storage:', err)
+  }
+}
+
+const removeUserFromStorage = () => {
+  try {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+  } catch (err) {
+    console.error('Error removing user from storage:', err)
+  }
+}
+
+// Login thunk
 export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const resp = await axios.post('/auth/login', { email, password })
       const data = resp.data
-      // store token in localStorage for persistence
+      
+      // Store token and user in localStorage
       if (data.token) {
         localStorage.setItem('token', data.token)
       }
+      if (data.user) {
+        saveUserToStorage(data.user)
+      }
+      
       return data
     } catch (err) {
       const message = err?.response?.data?.message || err.message || 'Login failed'
@@ -34,7 +68,7 @@ export const forgotPassword = createAsyncThunk(
   }
 )
 
-// Verify OTP: xác thực OTP
+// Verify OTP
 export const verifyOtp = createAsyncThunk(
   'auth/verifyOtp',
   async ({ email, otp }, { rejectWithValue }) => {
@@ -48,7 +82,7 @@ export const verifyOtp = createAsyncThunk(
   }
 )
 
-// Reset password: đặt lại mật khẩu mới
+// Reset password
 export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async ({ email, otp, newPassword }, { rejectWithValue }) => {
@@ -64,7 +98,7 @@ export const resetPassword = createAsyncThunk(
 
 const initialState = {
   token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
-  user: null,
+  user: typeof window !== 'undefined' ? loadUserFromStorage() : null,
   loading: false,
   error: null,
   // Forgot password states
@@ -80,7 +114,7 @@ const slice = createSlice({
     logout(state) {
       state.token = null
       state.user = null
-      localStorage.removeItem('token')
+      removeUserFromStorage()
     },
     clearForgotPasswordState(state) {
       state.otpSent = false
@@ -88,9 +122,15 @@ const slice = createSlice({
       state.resetSuccess = false
       state.error = null
     },
+    // Action to update user info from other slices (e.g., after profile update)
+    updateUser(state, action) {
+      state.user = { ...state.user, ...action.payload }
+      saveUserToStorage(state.user)
+    },
   },
   extraReducers(builder) {
     builder
+      // Login
       .addCase(login.pending, (state) => {
         state.loading = true
         state.error = null
@@ -149,5 +189,5 @@ const slice = createSlice({
   },
 })
 
-export const { logout, clearForgotPasswordState } = slice.actions
+export const { logout, clearForgotPasswordState, updateUser } = slice.actions
 export default slice.reducer

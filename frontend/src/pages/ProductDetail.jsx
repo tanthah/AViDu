@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react'
+// frontend/src/pages/ProductDetail.jsx - FIXED VERSION
+import React, { useEffect, useState, useRef } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProductById } from '../redux/productSlice'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs } from 'swiper/modules'
+import Header from '../components/Header'
+import Footer from '../components/Footer'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
@@ -19,12 +22,24 @@ export default function ProductDetail() {
     const { currentProduct, loading, error } = useSelector((s) => s.products)
     const [quantity, setQuantity] = useState(1)
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
+    
+    // Use ref to track if product has been fetched to prevent double fetch
+    const hasFetchedRef = useRef(false)
 
     useEffect(() => {
-        if (id) {
+        // Only fetch if we haven't fetched this product yet
+        if (id && !hasFetchedRef.current) {
+            hasFetchedRef.current = true
             dispatch(fetchProductById(id))
         }
-    }, [id, dispatch])
+        
+        // Cleanup on unmount or when ID changes
+        return () => {
+            if (id !== currentProduct?._id) {
+                hasFetchedRef.current = false
+            }
+        }
+    }, [id, dispatch, currentProduct?._id])
 
     const handleIncrease = () => {
         if (currentProduct && quantity < currentProduct.stock) {
@@ -45,37 +60,49 @@ export default function ProductDetail() {
 
     if (loading) {
         return (
-            <Container className="py-5 text-center">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
-            </Container>
+            <>
+                <Header />
+                <Container className="py-5 text-center">
+                    <Spinner animation="border" variant="primary" />
+                    <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
+                </Container>
+                <Footer />
+            </>
         )
     }
 
     if (error) {
         return (
-            <Container className="py-5">
-                <Alert variant="danger">
-                    <i className="bi bi-exclamation-triangle me-2"></i>
-                    {error}
-                </Alert>
-                <Button variant="primary" onClick={() => navigate('/dashboard')}>
-                    <i className="bi bi-house me-2"></i>
-                    Về trang chủ
-                </Button>
-            </Container>
+            <>
+                <Header />
+                <Container className="py-5">
+                    <Alert variant="danger">
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        {error}
+                    </Alert>
+                    <Button variant="primary" onClick={() => navigate('/')}>
+                        <i className="bi bi-house me-2"></i>
+                        Về trang chủ
+                    </Button>
+                </Container>
+                <Footer />
+            </>
         )
     }
 
     if (!currentProduct) {
         return (
-            <Container className="py-5 text-center">
-                <h3>Không tìm thấy sản phẩm</h3>
-                <Button variant="primary" onClick={() => navigate('/dashboard')} className="mt-3">
-                    <i className="bi bi-house me-2"></i>
-                    Về trang chủ
-                </Button>
-            </Container>
+            <>
+                <Header />
+                <Container className="py-5 text-center">
+                    <h3>Không tìm thấy sản phẩm</h3>
+                    <Button variant="primary" onClick={() => navigate('/')} className="mt-3">
+                        <i className="bi bi-house me-2"></i>
+                        Về trang chủ
+                    </Button>
+                </Container>
+                <Footer />
+            </>
         )
     }
 
@@ -87,21 +114,20 @@ export default function ProductDetail() {
 
     return (
         <div className="product-detail-page">
-            {/* Header */}
-            <div className="product-detail-header">
-                <Container>
+            <Header />
+
+            <Container className="py-4">
+                <div className="mb-3">
                     <Button
                         variant="link"
-                        onClick={() => navigate('/dashboard')}
-                        className="back-button"
+                        onClick={() => navigate('/')}
+                        className="back-button p-0"
                     >
                         <i className="bi bi-arrow-left me-2"></i>
                         Quay lại trang chủ
                     </Button>
-                </Container>
-            </div>
+                </div>
 
-            <Container className="py-4">
                 <Row className="g-4">
                     {/* Left Column - Images */}
                     <Col lg={5}>
@@ -202,7 +228,7 @@ export default function ProductDetail() {
                                 </span>
                                 <span>
                                     <i className="bi bi-cart-check text-success me-2"></i>
-                                    Đã bán <strong>{product.soldCount || 0}</strong>
+                                    Đã bán <strong>{product.sold || 0}</strong>
                                 </span>
                             </div>
 
@@ -277,6 +303,8 @@ export default function ProductDetail() {
                     </Col>
                 </Row>
             </Container>
+
+            <Footer />
         </div>
     )
 }

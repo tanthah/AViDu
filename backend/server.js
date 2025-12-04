@@ -20,6 +20,16 @@ import { generalLimiter } from './src/middleware/rateLimiter.js'
 const app = express()
 const PORT = process.env.PORT || 4000
 
+// 5. CORS - Cho phép frontend truy cập (MUST BE BEFORE ROUTES)
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:4000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+}))
+
+
 // ===== SECURITY MIDDLEWARES =====
 // 1. Helmet - Bảo mật HTTP headers (MOVE AFTER CORS)
 // Commented out temporarily as it might interfere with CORS
@@ -34,14 +44,6 @@ app.use(hppProtection)
 // 4. Rate Limiting - Giới hạn số request
 app.use(generalLimiter)
 
-// 5. CORS - Cho phép frontend truy cập (MUST BE BEFORE ROUTES)
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:4000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
-}))
 
 // 6. Body parsers với giới hạn kích thước
 app.use(express.json({ limit: '10mb' }))

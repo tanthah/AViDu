@@ -1,9 +1,9 @@
-// frontend/src/App.jsx - UPDATED VERSION
+// frontend/src/App.jsx - COMPLETE UPDATED VERSION
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import './App.css'
-import Home from './pages/home.jsx'
+import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
@@ -22,8 +22,8 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/dashboard" element={<Home />} />
       <Route path="/about" element={<About />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/register" element={token ? <Navigate to="/" replace /> : <Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/product/:id" element={<ProductDetail />} />
 
