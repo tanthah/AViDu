@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import axios from '../api/axios'
+import productApi from '../api/productApi'
 
 // Fetch latest products (8 sản phẩm mới nhất)
 export const fetchLatestProducts = createAsyncThunk(
     'products/fetchLatest',
     async (_, { rejectWithValue }) => {
         try {
-            const resp = await axios.get('/products/latest')
-            return resp.data.data
+            const resp = await productApi.getNewest()
+            return resp.data.products
         } catch (err) {
             const message = err?.response?.data?.message || err.message || 'Lỗi khi tải sản phẩm mới'
             return rejectWithValue(message)
@@ -15,13 +15,13 @@ export const fetchLatestProducts = createAsyncThunk(
     }
 )
 
-// Fetch best sellers (6 sản phẩm bán chạy)
+// Fetch best sellers (8 sản phẩm bán chạy)
 export const fetchBestSellers = createAsyncThunk(
     'products/fetchBestSellers',
     async (_, { rejectWithValue }) => {
         try {
-            const resp = await axios.get('/products/best-sellers')
-            return resp.data.data
+            const resp = await productApi.getBestSelling()
+            return resp.data.products
         } catch (err) {
             const message = err?.response?.data?.message || err.message || 'Lỗi khi tải sản phẩm bán chạy'
             return rejectWithValue(message)
@@ -34,8 +34,8 @@ export const fetchMostViewed = createAsyncThunk(
     'products/fetchMostViewed',
     async (_, { rejectWithValue }) => {
         try {
-            const resp = await axios.get('/products/most-viewed')
-            return resp.data.data
+            const resp = await productApi.getMostViewed()
+            return resp.data.products
         } catch (err) {
             const message = err?.response?.data?.message || err.message || 'Lỗi khi tải sản phẩm xem nhiều'
             return rejectWithValue(message)
@@ -43,13 +43,13 @@ export const fetchMostViewed = createAsyncThunk(
     }
 )
 
-// Fetch top discounts (4 sản phẩm khuyến mãi cao)
+// Fetch top discounts (8 sản phẩm khuyến mãi cao)
 export const fetchTopDiscounts = createAsyncThunk(
     'products/fetchTopDiscounts',
     async (_, { rejectWithValue }) => {
         try {
-            const resp = await axios.get('/products/top-discounts')
-            return resp.data.data
+            const resp = await productApi.getHighestDiscount()
+            return resp.data.products
         } catch (err) {
             const message = err?.response?.data?.message || err.message || 'Lỗi khi tải sản phẩm khuyến mãi'
             return rejectWithValue(message)
@@ -62,8 +62,8 @@ export const fetchProductById = createAsyncThunk(
     'products/fetchById',
     async (id, { rejectWithValue }) => {
         try {
-            const resp = await axios.get(`/products/${id}`)
-            return resp.data.data
+            const resp = await productApi.getDetail(id)
+            return resp.data.product
         } catch (err) {
             const message = err?.response?.data?.message || err.message || 'Lỗi khi tải thông tin sản phẩm'
             return rejectWithValue(message)
@@ -71,19 +71,8 @@ export const fetchProductById = createAsyncThunk(
     }
 )
 
-// Increment view count
-export const incrementProductView = createAsyncThunk(
-    'products/incrementView',
-    async (id, { rejectWithValue }) => {
-        try {
-            const resp = await axios.post(`/products/${id}/view`)
-            return resp.data
-        } catch (err) {
-            // Silent fail - không cần thông báo lỗi cho user
-            return rejectWithValue(null)
-        }
-    }
-)
+// Increment view count (Removed - handled by getProductDetail)
+// export const incrementProductView = ...
 
 const initialState = {
     latest: [],
@@ -180,10 +169,7 @@ const productSlice = createSlice({
                 state.error = action.payload
             })
 
-            // Increment View (silent)
-            .addCase(incrementProductView.fulfilled, (state) => {
-                // Do nothing - just track views in backend
-            })
+
     },
 })
 

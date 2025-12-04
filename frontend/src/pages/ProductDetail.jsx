@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProductById, incrementProductView } from '../redux/productSlice'
+import { fetchProductById } from '../redux/productSlice'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
-import './ProductDetail.css'
+import './css/ProductDetail.css'
 
 export default function ProductDetail() {
     const { id } = useParams()
@@ -23,8 +23,6 @@ export default function ProductDetail() {
     useEffect(() => {
         if (id) {
             dispatch(fetchProductById(id))
-            // Increment view count (silent)
-            dispatch(incrementProductView(id))
         }
     }, [id, dispatch])
 
@@ -106,7 +104,7 @@ export default function ProductDetail() {
             <Container className="py-4">
                 <Row className="g-4">
                     {/* Left Column - Images */}
-                    <Col lg={6}>
+                    <Col lg={5}>
                         <div className="product-images-section">
                             {/* Main Swiper */}
                             <Swiper
@@ -148,7 +146,7 @@ export default function ProductDetail() {
                     </Col>
 
                     {/* Right Column - Info */}
-                    <Col lg={6}>
+                    <Col lg={7}>
                         <div className="product-info-section">
                             {/* Product Name */}
                             <h1 className="product-title">{product.name}</h1>

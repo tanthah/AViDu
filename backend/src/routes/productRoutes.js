@@ -1,11 +1,11 @@
 import express from 'express'
 import {
-    getLatestProducts,
-    getBestSellers,
-    getMostViewed,
-    getTopDiscounts,
-    getProductById,
-    incrementView,
+    getAllProducts,
+    getProductDetail,
+    getBestSellingProducts,
+    getNewestProducts,
+    getMostViewedProducts,
+    getHighestDiscountProducts,
     createProduct,
     updateProduct,
     deleteProduct
@@ -13,15 +13,16 @@ import {
 
 const router = express.Router()
 
-// Public routes - không cần authentication
-router.get('/latest', getLatestProducts)
-router.get('/best-sellers', getBestSellers)
-router.get('/most-viewed', getMostViewed)
-router.get('/top-discounts', getTopDiscounts)
+// Public routes
+router.get('/', getAllProducts)
+router.get('/best-selling', getBestSellingProducts)
+router.get('/newest', getNewestProducts)
+router.get('/most-viewed', getMostViewedProducts)
+router.get('/highest-discount', getHighestDiscountProducts)
 
 // Product detail routes
-router.get('/:id', getProductById)
-router.post('/:id/view', incrementView)
+router.get('/:id', getProductDetail)
+// router.post('/:id/view', incrementView) // View increment is now handled in getProductDetail
 
 // Admin routes - TODO: Thêm authMiddleware và check admin role
 router.post('/', createProduct)           // CREATE

@@ -1,0 +1,125 @@
+.header-main {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.top-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 3px 0;
+  font-size: 0.8rem;
+}
+
+.main-navbar {
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+}
+
+
+.brand-logo {
+  font-weight: bold !important;
+  font-size: 0.4rem !important;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem  !important;
+  margin: 0.3rem !important;
+  width: auto !important;
+  max-width: 160px !important;
+  max-height: 40px !important;
+  background-color:#bee2f3 !important;
+}
+
+.brand-logo i {
+  font-size: 1.7rem !important;
+  margin-right: 0.2rem !important;
+}
+
+.brand-text {
+  font-size: 1.5rem !important;
+  white-space: nowrap !important;
+}
+
+.brand-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Category Navigation Inline */
+.category-nav-inline {
+  margin-left: 2rem;
+}
+
+.category-link {
+  padding: 0.4rem 0.8rem;
+  color: #495057;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.category-link:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+}
+
+.search-form {
+  display: flex;
+  margin: 0 1rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-input {
+  border-radius: 20px 0 0 20px !important;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.search-btn {
+  border-radius: 0 20px 20px 0 !important;
+  padding: 0.4rem 0.8rem;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+}
+
+/* Dropdown customization */
+#category-dropdown .dropdown-toggle,
+#user-dropdown .dropdown-toggle {
+  font-size: 0.9rem;
+}
+
+@media (max-width: 991px) {
+  .search-form {
+    max-width: 100%;
+    margin: 1rem 0;
+  }
+  
+  .top-bar {
+    font-size: 0.75rem;
+  }
+  
+  .top-bar > div > div:last-child {
+    display: none;
+  }
+
+  .category-nav-inline {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .main-navbar {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+}

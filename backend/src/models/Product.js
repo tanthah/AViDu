@@ -14,6 +14,8 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 0 },           // tồn kho
     sold: { type: Number, default: 0 },            // đã bán
     views: { type: Number, default: 0 },           // lượt xem
+    rating: { type: Number, default: 0 },          // điểm đánh giá trung bình (0-5)
+    numReviews: { type: Number, default: 0 },      // số lượng đánh giá
 
     images: [String],
 
