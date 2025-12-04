@@ -21,8 +21,9 @@ const app = express()
 const PORT = process.env.PORT || 4000
 
 // ===== SECURITY MIDDLEWARES =====
-// 1. Helmet - Bảo mật HTTP headers
-app.use(helmetConfig)
+// 1. Helmet - Bảo mật HTTP headers (MOVE AFTER CORS)
+// Commented out temporarily as it might interfere with CORS
+// app.use(helmetConfig)
 
 // 2. XSS Protection - Chống tấn công XSS
 //app.use(xssProtection)
@@ -33,12 +34,13 @@ app.use(hppProtection)
 // 4. Rate Limiting - Giới hạn số request
 app.use(generalLimiter)
 
-// 5. CORS - Cho phép frontend truy cập
+// 5. CORS - Cho phép frontend truy cập (MUST BE BEFORE ROUTES)
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:4000'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }))
 
 // 6. Body parsers với giới hạn kích thước
@@ -138,6 +140,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`)
   console.log(`🔒 Security middlewares đã được kích hoạt`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`🌐 CORS enabled for: http://localhost:5173`)
 })
 
 export default app
