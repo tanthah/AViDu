@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge, Image } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice';
@@ -21,6 +21,24 @@ export default function Header() {
     if (searchQuery.trim()) {
       navigate(`/search?q=${searchQuery}`);
     }
+  };
+
+  const handleCartClick = () => {
+    if (!token) {
+      // Nếu chưa đăng nhập, chuyển đến trang login
+      navigate('/login');
+    } else {
+      // Nếu đã đăng nhập, chuyển đến trang giỏ hàng
+      navigate('/cart');
+    }
+  };
+
+  // Get avatar URL - prioritize Cloudinary URLs
+  const getAvatarUrl = () => {
+    if (user?.avatar && user.avatar.includes('cloudinary.com')) {
+      return user.avatar;
+    }
+    return 'https://via.placeholder.com/40?text=U';
   };
 
   return (
@@ -100,21 +118,37 @@ export default function Header() {
 
             {/* Right Menu */}
             <Nav className="ms-auto align-items-center">
-              <Nav.Link as={Link} to="/cart" className="position-relative me-3">
+              {/* Cart Icon - Always visible */}
+              <Nav.Link onClick={handleCartClick} className="position-relative me-3 cart-link">
                 <i className="bi bi-cart3 fs-5"></i>
                 <Badge bg="danger" pill className="cart-badge">0</Badge>
               </Nav.Link>
 
               {token ? (
+                /* Logged in - Show user avatar and dropdown */
                 <NavDropdown 
                   title={
-                    <span>
-                      <i className="bi bi-person-circle me-1"></i>
-                      {user?.name || 'User'}
+                    <span className="d-flex align-items-center">
+                      <Image
+                        src={getAvatarUrl()}
+                        roundedCircle
+                        style={{ 
+                          width: '35px', 
+                          height: '35px', 
+                          objectFit: 'cover',
+                          marginRight: '8px',
+                          border: '2px solid #0d6efd'
+                        }}
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/40?text=U';
+                        }}
+                      />
+                      <span className="d-none d-md-inline">{user?.name || 'User'}</span>
                     </span>
                   }
                   id="user-dropdown"
                   align="end"
+                  className="user-dropdown"
                 >
                   <NavDropdown.Item as={Link} to="/review-profile">
                     <i className="bi bi-person me-2"></i>Hồ sơ
@@ -128,6 +162,7 @@ export default function Header() {
                   </NavDropdown.Item>
                 </NavDropdown>
               ) : (
+                /* Not logged in - Show login and register buttons */
                 <>
                   <Button as={Link} to="/login" variant="outline-primary" size="sm" className="me-2 rounded-pill">
                     <i className="bi bi-box-arrow-in-right me-1"></i>Đăng nhập

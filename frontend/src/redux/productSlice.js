@@ -71,9 +71,6 @@ export const fetchProductById = createAsyncThunk(
     }
 )
 
-// Increment view count (Removed - handled by getProductDetail)
-// export const incrementProductView = ...
-
 const initialState = {
     latest: [],
     bestSellers: [],
@@ -91,6 +88,7 @@ const productSlice = createSlice({
         clearCurrentProduct(state) {
             state.currentProduct = null
             state.error = null
+            state.loading = false
         },
         clearError(state) {
             state.error = null
@@ -158,7 +156,6 @@ const productSlice = createSlice({
             .addCase(fetchProductById.pending, (state) => {
                 state.loading = true
                 state.error = null
-                state.currentProduct = null
             })
             .addCase(fetchProductById.fulfilled, (state, action) => {
                 state.loading = false
@@ -168,8 +165,6 @@ const productSlice = createSlice({
                 state.loading = false
                 state.error = action.payload
             })
-
-
     },
 })
 

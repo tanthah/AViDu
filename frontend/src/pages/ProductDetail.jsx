@@ -1,9 +1,9 @@
 // frontend/src/pages/ProductDetail.jsx - FIXED VERSION
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProductById } from '../redux/productSlice'
+import { fetchProductById, clearCurrentProduct } from '../redux/productSlice'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs } from 'swiper/modules'
 import Header from '../components/Header'
@@ -22,24 +22,21 @@ export default function ProductDetail() {
     const { currentProduct, loading, error } = useSelector((s) => s.products)
     const [quantity, setQuantity] = useState(1)
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
-    
-    // Use ref to track if product has been fetched to prevent double fetch
-    const hasFetchedRef = useRef(false)
 
+    // Fetch product only when ID changes
     useEffect(() => {
-        // Only fetch if we haven't fetched this product yet
-        if (id && !hasFetchedRef.current) {
-            hasFetchedRef.current = true
+        if (id) {
+            // Clear previous product
+            dispatch(clearCurrentProduct())
+            // Fetch new product
             dispatch(fetchProductById(id))
         }
-        
-        // Cleanup on unmount or when ID changes
+
+        // Cleanup when unmounting or ID changes
         return () => {
-            if (id !== currentProduct?._id) {
-                hasFetchedRef.current = false
-            }
+            dispatch(clearCurrentProduct())
         }
-    }, [id, dispatch, currentProduct?._id])
+    }, [id, dispatch])
 
     const handleIncrease = () => {
         if (currentProduct && quantity < currentProduct.stock) {
@@ -63,7 +60,7 @@ export default function ProductDetail() {
             <>
                 <Header />
                 <Container className="py-5 text-center">
-                    <Spinner animation="border" variant="primary" />
+                    <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
                     <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
                 </Container>
                 <Footer />
