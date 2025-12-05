@@ -25,18 +25,11 @@ export default function ReviewProfile() {
 
   // Helper function to get correct avatar URL
   const getAvatarUrl = () => {
-    const avatar = user?.avatar || authUser?.avatar
-    if (!avatar) {
-      return 'https://via.placeholder.com/200?text=Avatar'
+    if (user?.avatar && user.avatar.includes('cloudinary.com')) {
+      return user.avatar;
     }
-    
-    // Only accept Cloudinary URLs
-    if (avatar.includes('cloudinary.com')) {
-      return avatar
-    }
-    
-    return 'https://via.placeholder.com/200?text=Avatar'
-  }
+    return 'https://via.placeholder.com/40?text=U';
+  };
 
   const handleImageError = (e) => {
     e.target.src = 'https://via.placeholder.com/200?text=Avatar'

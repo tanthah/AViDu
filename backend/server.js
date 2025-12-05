@@ -1,4 +1,4 @@
-// backend/server.js - UPDATED
+// backend/server.js - FIXED WITH ADDRESS ROUTES
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
@@ -11,6 +11,7 @@ import editUserRoutes from './src/routes/editUserRoutes.js'
 import productRoutes from './src/routes/productRoutes.js'
 import cartRoutes from './src/routes/cartRoutes.js'
 import orderRoutes from './src/routes/orderRoutes.js'
+import addressRoutes from './src/routes/addressRoutes.js' // ✅ THÊM
 
 // Import security middlewares
 import {
@@ -53,8 +54,9 @@ app.use('/api/auth', authRoutes)
 app.use('/api/register', registerRoutes)
 app.use('/api/user', editUserRoutes)
 app.use('/api/products', productRoutes)
-app.use('/api/cart', cartRoutes)        // NEW
-app.use('/api/orders', orderRoutes)     // NEW
+app.use('/api/cart', cartRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/addresses', addressRoutes) // ✅ THÊM ADDRESS ROUTES
 
 // Health check
 app.get('/api/health', (req, res) => {

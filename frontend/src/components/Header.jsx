@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge, Image } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice';
+import { fetchCart } from '../redux/cartSlice'; // ✅ THÊM
 import './css/Header.css';
 
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user, token } = useSelector((s) => s.auth);
+  const { cart } = useSelector((s) => s.cart); // ✅ THÊM
   const [searchQuery, setSearchQuery] = useState('');
+
+  // ✅ Fetch cart khi user đăng nhập
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchCart());
+    }
+  }, [token, dispatch]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -37,6 +46,9 @@ export default function Header() {
     }
     return 'https://via.placeholder.com/40?text=U';
   };
+
+  // ✅ Lấy số lượng items trong cart
+  const cartItemCount = cart?.totalQuantity || 0;
 
   return (
     <header className="header-main">
@@ -73,7 +85,6 @@ export default function Header() {
                 <i className="bi bi-house-door me-1"></i>Trang chủ
               </Nav.Link>
               
-              {/* NEW: Products Link */}
               <Nav.Link as={Link} to="/products" className="category-link">
                 <i className="bi bi-box-seam me-1"></i>Sản phẩm
               </Nav.Link>
@@ -119,13 +130,16 @@ export default function Header() {
             <Nav className="ms-auto align-items-center">
               <Nav.Link onClick={handleCartClick} className="position-relative me-3 cart-link">
                 <i className="bi bi-cart3 fs-5"></i>
-                <Badge bg="danger" pill className="cart-badge">0</Badge>
+                {/* ✅ Hiển thị số lượng items trong cart */}
+                <Badge bg="danger" pill className="cart-badge">
+                  {cartItemCount}
+                </Badge>
               </Nav.Link>
 
               {token ? (
                 <NavDropdown 
                   title={
-                    <span className="d-flex align-items-center">
+                    <div className="d-flex align-items-center">
                       <Image
                         src={getAvatarUrl()}
                         roundedCircle
@@ -141,7 +155,7 @@ export default function Header() {
                         }}
                       />
                       <span className="d-none d-md-inline">{user?.name || 'User'}</span>
-                    </span>
+                    </div>
                   }
                   id="user-dropdown"
                   align="end"

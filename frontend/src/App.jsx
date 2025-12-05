@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - UPDATED WITH PRODUCTS ROUTE
+// frontend/src/App.jsx - FIXED WITH ALL ROUTES
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -12,6 +12,10 @@ import EditProfile from './pages/EditProfile.jsx'
 import ProductDetail from './pages/ProductDetail.jsx'
 import Products from './pages/Products.jsx'
 import About from './pages/About.jsx'
+import Cart from './pages/Cart.jsx' // ✅ THÊM
+import Checkout from './pages/Checkout.jsx' // ✅ THÊM
+import Orders from './pages/Orders.jsx' // ✅ THÊM
+import OrderDetail from './pages/OrderDetail.jsx' // ✅ THÊM
 
 function App() {
   const token = useSelector((s) => s.auth.token)
@@ -29,7 +33,27 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/product/:id" element={<ProductDetail />} />
 
-      {/* Protected Routes */}
+      {/* Protected Routes - Cart & Checkout */}
+      <Route 
+        path="/cart" 
+        element={token ? <Cart /> : <Navigate to="/login" replace />} 
+      />
+      <Route 
+        path="/checkout" 
+        element={token ? <Checkout /> : <Navigate to="/login" replace />} 
+      />
+
+      {/* Protected Routes - Orders */}
+      <Route 
+        path="/orders" 
+        element={token ? <Orders /> : <Navigate to="/login" replace />} 
+      />
+      <Route 
+        path="/orders/:orderId" 
+        element={token ? <OrderDetail /> : <Navigate to="/login" replace />} 
+      />
+
+      {/* Protected Routes - Profile */}
       <Route 
         path="/review-profile" 
         element={token ? <ReviewProfile /> : <Navigate to="/login" replace />} 

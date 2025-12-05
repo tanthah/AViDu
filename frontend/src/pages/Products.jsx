@@ -1,6 +1,6 @@
-// frontend/src/pages/Products.jsx
+// frontend/src/pages/Products.jsx - FIXED WITH RANDOM API
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Spinner, Alert, Pagination, Form, Button } from 'react-bootstrap';
+import { Container, Row, Col, Spinner, Alert, Pagination, Form } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -16,12 +16,13 @@ export default function Products() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [sortBy, setSortBy] = useState('newest');
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [sortBy, setSortBy] = useState('random');
   const productsPerPage = 16;
 
   useEffect(() => {
     const page = parseInt(searchParams.get('page')) || 1;
-    const sort = searchParams.get('sort') || 'newest';
+    const sort = searchParams.get('sort') || 'random';
     setCurrentPage(page);
     setSortBy(sort);
     fetchProducts(page, sort);
@@ -32,40 +33,53 @@ export default function Products() {
       setLoading(true);
       setError(null);
       
-      const response = await productApi.getAll();
-      let allProducts = response.data.products || [];
+      let response;
+      
+      // ✅ Nếu sort = random, dùng API random có sẵn phân trang
+      if (sort === 'random') {
+        response = await productApi.getRandom(page, productsPerPage);
+        setProducts(response.data.products || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
+        setTotalProducts(response.data.pagination?.totalProducts || 0);
+      } else {
+        // Với các sort khác, lấy tất cả rồi sort client-side
+        response = await productApi.getAll();
+        let allProducts = response.data.products || [];
 
-      // Sort products
-      switch (sort) {
-        case 'newest':
-          allProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          break;
-        case 'price-asc':
-          allProducts.sort((a, b) => (a.finalPrice || a.price) - (b.finalPrice || b.price));
-          break;
-        case 'price-desc':
-          allProducts.sort((a, b) => (b.finalPrice || b.price) - (a.finalPrice || a.price));
-          break;
-        case 'best-selling':
-          allProducts.sort((a, b) => (b.sold || 0) - (a.sold || 0));
-          break;
-        case 'discount':
-          allProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-          break;
-        default:
-          break;
+        // Sort products
+        switch (sort) {
+          case 'newest':
+            allProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            break;
+          case 'price-asc':
+            allProducts.sort((a, b) => (a.finalPrice || a.price) - (b.finalPrice || b.price));
+            break;
+          case 'price-desc':
+            allProducts.sort((a, b) => (b.finalPrice || b.price) - (a.finalPrice || a.price));
+            break;
+          case 'best-selling':
+            allProducts.sort((a, b) => (b.sold || 0) - (a.sold || 0));
+            break;
+          case 'discount':
+            allProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+            break;
+          default:
+            break;
+        }
+
+        // Client-side pagination
+        const totalItems = allProducts.length;
+        const totalPagesCalc = Math.ceil(totalItems / productsPerPage);
+        setTotalPages(totalPagesCalc);
+        setTotalProducts(totalItems);
+
+        const startIndex = (page - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const paginatedProducts = allProducts.slice(startIndex, endIndex);
+
+        setProducts(paginatedProducts);
       }
-
-      // Pagination
-      const totalItems = allProducts.length;
-      const totalPagesCalc = Math.ceil(totalItems / productsPerPage);
-      setTotalPages(totalPagesCalc);
-
-      const startIndex = (page - 1) * productsPerPage;
-      const endIndex = startIndex + productsPerPage;
-      const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-      setProducts(paginatedProducts);
+      
       setLoading(false);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -152,7 +166,7 @@ export default function Products() {
             <Col md={8}>
               <div className="d-flex align-items-center">
                 <span className="text-muted me-3">
-                  Hiển thị {products.length > 0 ? ((currentPage - 1) * productsPerPage + 1) : 0} - {Math.min(currentPage * productsPerPage, products.length + (currentPage - 1) * productsPerPage)} sản phẩm
+                  Hiển thị {products.length > 0 ? ((currentPage - 1) * productsPerPage + 1) : 0} - {Math.min(currentPage * productsPerPage, totalProducts)} / {totalProducts} sản phẩm
                 </span>
               </div>
             </Col>
@@ -162,6 +176,7 @@ export default function Products() {
                 onChange={handleSortChange}
                 className="sort-select"
               >
+                <option value="random">Random</option>
                 <option value="newest">Mới nhất</option>
                 <option value="best-selling">Bán chạy nhất</option>
                 <option value="price-asc">Giá tăng dần</option>

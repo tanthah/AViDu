@@ -3,6 +3,7 @@ import authReducer from './redux/authSlice'
 import editUserReducer from './redux/editUserSlice'
 import registerReducer from './redux/registerSlice'
 import productReducer from './redux/productSlice'
+import cartReducer from './redux/cartSlice' // ✅ THÊM IMPORT
 
 const store = configureStore({
   reducer: {
@@ -10,11 +11,11 @@ const store = configureStore({
     editUser: editUserReducer,
     register: registerReducer,
     products: productReducer,
+    cart: cartReducer, // ✅ THÊM CART REDUCER
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignore these paths in the state
         ignoredActions: ['register/setImageFile'],
         ignoredPaths: ['register.imageFile'],
       },
