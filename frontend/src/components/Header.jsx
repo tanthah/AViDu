@@ -13,7 +13,7 @@ export default function Header() {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
+    navigate('/');
   };
 
   const handleSearch = (e) => {
@@ -25,15 +25,12 @@ export default function Header() {
 
   const handleCartClick = () => {
     if (!token) {
-      // Nếu chưa đăng nhập, chuyển đến trang login
       navigate('/login');
     } else {
-      // Nếu đã đăng nhập, chuyển đến trang giỏ hàng
       navigate('/cart');
     }
   };
 
-  // Get avatar URL - prioritize Cloudinary URLs
   const getAvatarUrl = () => {
     if (user?.avatar && user.avatar.includes('cloudinary.com')) {
       return user.avatar;
@@ -43,7 +40,6 @@ export default function Header() {
 
   return (
     <header className="header-main">
-      {/* Top Bar */}
       <div className="top-bar">
         <Container>
           <div className="d-flex justify-content-between align-items-center">
@@ -62,10 +58,9 @@ export default function Header() {
         </Container>
       </div>
 
-      {/* Main Header */}
       <Navbar bg="white" expand="lg" className="shadow-sm main-navbar">
         <Container>
-          <Navbar.Brand as={Link} to="/dashboard" className="brand-logo">
+          <Navbar.Brand as={Link} to="/" className="brand-logo">
             <i className="bi bi-shop text-primary me-1"></i>
             <span className="brand-text">UTE Shop</span>
           </Navbar.Brand>
@@ -73,14 +68,20 @@ export default function Header() {
           <Navbar.Toggle aria-controls="main-navbar" />
           
           <Navbar.Collapse id="main-navbar">
-            {/* Category Navigation */}
             <Nav className="me-auto category-nav-inline">
-              <Nav.Link as={Link} to="/dashboard" className="category-link">
+              <Nav.Link as={Link} to="/" className="category-link">
                 <i className="bi bi-house-door me-1"></i>Trang chủ
               </Nav.Link>
+              
+              {/* NEW: Products Link */}
+              <Nav.Link as={Link} to="/products" className="category-link">
+                <i className="bi bi-box-seam me-1"></i>Sản phẩm
+              </Nav.Link>
+              
               <Nav.Link as={Link} to="/about" className="category-link">
                 <i className="bi bi-info-circle me-1"></i>Giới thiệu
               </Nav.Link>
+              
               <NavDropdown title={<span><i className="bi bi-grid me-1"></i>Danh mục</span>} id="category-dropdown" className="category-link">
                 <NavDropdown.Item as={Link} to="/category/dien-thoai">
                   <i className="bi bi-phone me-2"></i>Điện thoại
@@ -100,7 +101,6 @@ export default function Header() {
               </NavDropdown>
             </Nav>
 
-            {/* Search Bar */}
             <Form className="search-form" onSubmit={handleSearch}>
               <div className="input-group">
                 <Form.Control
@@ -116,16 +116,13 @@ export default function Header() {
               </div>
             </Form>
 
-            {/* Right Menu */}
             <Nav className="ms-auto align-items-center">
-              {/* Cart Icon - Always visible */}
               <Nav.Link onClick={handleCartClick} className="position-relative me-3 cart-link">
                 <i className="bi bi-cart3 fs-5"></i>
                 <Badge bg="danger" pill className="cart-badge">0</Badge>
               </Nav.Link>
 
               {token ? (
-                /* Logged in - Show user avatar and dropdown */
                 <NavDropdown 
                   title={
                     <span className="d-flex align-items-center">
@@ -162,7 +159,6 @@ export default function Header() {
                   </NavDropdown.Item>
                 </NavDropdown>
               ) : (
-                /* Not logged in - Show login and register buttons */
                 <>
                   <Button as={Link} to="/login" variant="outline-primary" size="sm" className="me-2 rounded-pill">
                     <i className="bi bi-box-arrow-in-right me-1"></i>Đăng nhập

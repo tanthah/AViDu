@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - COMPLETE UPDATED VERSION
+// frontend/src/App.jsx - UPDATED WITH PRODUCTS ROUTE
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -10,6 +10,7 @@ import ForgotPassword from './pages/ForgotPassword.jsx'
 import ReviewProfile from './pages/ReviewProfile.jsx'
 import EditProfile from './pages/EditProfile.jsx'
 import ProductDetail from './pages/ProductDetail.jsx'
+import Products from './pages/Products.jsx'
 import About from './pages/About.jsx'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
       <Route path="/dashboard" element={<Home />} />
+      <Route path="/products" element={<Products />} />
       <Route path="/about" element={<About />} />
       <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/register" element={token ? <Navigate to="/" replace /> : <Register />} />

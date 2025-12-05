@@ -1,4 +1,4 @@
-// frontend/src/redux/authSlice.js - UPDATED VERSION
+// frontend/src/redux/authSlice.js - LOGOUT FIXED
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import axios from '../api/axios'
 
@@ -25,6 +25,7 @@ const removeUserFromStorage = () => {
   try {
     localStorage.removeItem('user')
     localStorage.removeItem('token')
+    console.log('✅ User data cleared from localStorage')
   } catch (err) {
     console.error('Error removing user from storage:', err)
   }
@@ -38,7 +39,6 @@ export const login = createAsyncThunk(
       const resp = await axios.post('/auth/login', { email, password })
       const data = resp.data
       
-      // Store token and user in localStorage
       if (data.token) {
         localStorage.setItem('token', data.token)
       }
@@ -101,7 +101,6 @@ const initialState = {
   user: typeof window !== 'undefined' ? loadUserFromStorage() : null,
   loading: false,
   error: null,
-  // Forgot password states
   otpSent: false,
   otpVerified: false,
   resetSuccess: false,
@@ -112,8 +111,13 @@ const slice = createSlice({
   initialState,
   reducers: {
     logout(state) {
+      console.log('🚪 Logging out user...')
       state.token = null
       state.user = null
+      state.error = null
+      state.otpSent = false
+      state.otpVerified = false
+      state.resetSuccess = false
       removeUserFromStorage()
     },
     clearForgotPasswordState(state) {
@@ -122,7 +126,6 @@ const slice = createSlice({
       state.resetSuccess = false
       state.error = null
     },
-    // Action to update user info from other slices (e.g., after profile update)
     updateUser(state, action) {
       state.user = { ...state.user, ...action.payload }
       saveUserToStorage(state.user)

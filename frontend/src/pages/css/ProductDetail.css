@@ -1,5 +1,7 @@
 .product-detail-page {
     min-height: 100vh;
+    max-width: 1300px;
+    margin: 0 auto;
     background: #f8f9fa;
 }
 

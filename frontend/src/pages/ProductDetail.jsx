@@ -1,5 +1,5 @@
 // frontend/src/pages/ProductDetail.jsx - FIXED VERSION
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
@@ -18,25 +18,28 @@ export default function ProductDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
     const dispatch = useDispatch()
+    const hasFetched = useRef(false) // Prevent double fetch
 
     const { currentProduct, loading, error } = useSelector((s) => s.products)
     const [quantity, setQuantity] = useState(1)
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
 
-    // Fetch product only when ID changes
+    // Fetch product only once when ID changes
     useEffect(() => {
-        if (id) {
-            // Clear previous product
-            dispatch(clearCurrentProduct())
-            // Fetch new product
-            dispatch(fetchProductById(id))
+        if (!id) return;
+
+        if (!hasFetched.current) {
+            hasFetched.current = true;
+            dispatch(clearCurrentProduct());
+            dispatch(fetchProductById(id));
         }
 
-        // Cleanup when unmounting or ID changes
         return () => {
-            dispatch(clearCurrentProduct())
-        }
-    }, [id, dispatch])
+            // ❌ KHÔNG reset hasFetched tại đây
+            dispatch(clearCurrentProduct());
+        };
+    }, [id, dispatch]);
+
 
     const handleIncrease = () => {
         if (currentProduct && quantity < currentProduct.stock) {
@@ -51,7 +54,6 @@ export default function ProductDetail() {
     }
 
     const handleAddToCart = () => {
-        // TODO: Add to cart functionality
         alert(`Thêm ${quantity} sản phẩm vào giỏ hàng!`)
     }
 
@@ -114,22 +116,10 @@ export default function ProductDetail() {
             <Header />
 
             <Container className="py-4">
-                <div className="mb-3">
-                    <Button
-                        variant="link"
-                        onClick={() => navigate('/')}
-                        className="back-button p-0"
-                    >
-                        <i className="bi bi-arrow-left me-2"></i>
-                        Quay lại trang chủ
-                    </Button>
-                </div>
 
                 <Row className="g-4">
-                    {/* Left Column - Images */}
                     <Col lg={5}>
                         <div className="product-images-section">
-                            {/* Main Swiper */}
                             <Swiper
                                 modules={[Navigation, Pagination, Thumbs]}
                                 navigation
@@ -147,7 +137,6 @@ export default function ProductDetail() {
                                 ))}
                             </Swiper>
 
-                            {/* Thumbnails Swiper */}
                             {images.length > 1 && (
                                 <Swiper
                                     onSwiper={setThumbsSwiper}
@@ -168,13 +157,10 @@ export default function ProductDetail() {
                         </div>
                     </Col>
 
-                    {/* Right Column - Info */}
                     <Col lg={7}>
                         <div className="product-info-section">
-                            {/* Product Name */}
                             <h1 className="product-title">{product.name}</h1>
 
-                            {/* Category */}
                             {product.categoryId && (
                                 <div className="mb-3">
                                     <Badge bg="secondary" className="category-badge">
@@ -184,7 +170,6 @@ export default function ProductDetail() {
                                 </div>
                             )}
 
-                            {/* Price Section */}
                             <div className="price-box">
                                 {product.discount > 0 && product.price && (
                                     <>
@@ -201,7 +186,6 @@ export default function ProductDetail() {
                                 </div>
                             </div>
 
-                            {/* Stock Status */}
                             <div className="stock-section my-3">
                                 <strong className="me-2">Tình trạng:</strong>
                                 {isOutOfStock ? (
@@ -217,7 +201,6 @@ export default function ProductDetail() {
                                 )}
                             </div>
 
-                            {/* Stats */}
                             <div className="product-stats-detail mb-4">
                                 <span className="me-4">
                                     <i className="bi bi-eye text-primary me-2"></i>
@@ -231,7 +214,6 @@ export default function ProductDetail() {
 
                             <hr />
 
-                            {/* Quantity Selector */}
                             <div className="quantity-section my-4">
                                 <strong className="me-3">Số lượng:</strong>
                                 <div className="quantity-controls">
@@ -260,7 +242,6 @@ export default function ProductDetail() {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
                             <div className="action-buttons d-flex gap-2">
                                 <Button
                                     variant="primary"
@@ -281,7 +262,6 @@ export default function ProductDetail() {
                                 </Button>
                             </div>
 
-                            {/* Description */}
                             {product.description && (
                                 <div className="description-section mt-4">
                                     <h5 className="fw-bold mb-3">Mô tả sản phẩm</h5>
@@ -289,7 +269,6 @@ export default function ProductDetail() {
                                 </div>
                             )}
 
-                            {/* Brand */}
                             {product.brand && (
                                 <div className="brand-section mt-3">
                                     <strong>Thương hiệu:</strong>
