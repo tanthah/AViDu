@@ -2,7 +2,6 @@
 import express from 'express'
 import {
     getAllProducts,
-    getRandomProducts,
     getProductDetail,
     getBestSellingProducts,
     getNewestProducts,
@@ -17,7 +16,7 @@ const router = express.Router()
 
 // Public routes
 router.get('/', getAllProducts)
-router.get('/random', getRandomProducts) // NEW: Random với phân trang
+//router.get('/random', getRandomProducts) // NEW: Random với phân trang
 router.get('/best-selling', getBestSellingProducts)
 router.get('/newest', getNewestProducts)
 router.get('/most-viewed', getMostViewedProducts)

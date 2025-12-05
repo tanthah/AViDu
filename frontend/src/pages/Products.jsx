@@ -1,4 +1,3 @@
-// frontend/src/pages/Products.jsx - FIXED WITH RANDOM API
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Spinner, Alert, Pagination, Form } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
@@ -17,12 +16,12 @@ export default function Products() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [sortBy, setSortBy] = useState('random');
+  const [sortBy, setSortBy] = useState('newest');
   const productsPerPage = 16;
 
   useEffect(() => {
     const page = parseInt(searchParams.get('page')) || 1;
-    const sort = searchParams.get('sort') || 'random';
+    const sort = searchParams.get('sort') || 'newest';
     setCurrentPage(page);
     setSortBy(sort);
     fetchProducts(page, sort);
@@ -33,53 +32,48 @@ export default function Products() {
       setLoading(true);
       setError(null);
       
-      let response;
-      
-      // ✅ Nếu sort = random, dùng API random có sẵn phân trang
-      if (sort === 'random') {
-        response = await productApi.getRandom(page, productsPerPage);
-        setProducts(response.data.products || []);
-        setTotalPages(response.data.pagination?.totalPages || 1);
-        setTotalProducts(response.data.pagination?.totalProducts || 0);
-      } else {
-        // Với các sort khác, lấy tất cả rồi sort client-side
-        response = await productApi.getAll();
-        let allProducts = response.data.products || [];
+      // ✅ Lấy tất cả sản phẩm
+      const response = await productApi.getAll();
+      let allProducts = response.data.products || [];
 
-        // Sort products
-        switch (sort) {
-          case 'newest':
-            allProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            break;
-          case 'price-asc':
-            allProducts.sort((a, b) => (a.finalPrice || a.price) - (b.finalPrice || b.price));
-            break;
-          case 'price-desc':
-            allProducts.sort((a, b) => (b.finalPrice || b.price) - (a.finalPrice || a.price));
-            break;
-          case 'best-selling':
-            allProducts.sort((a, b) => (b.sold || 0) - (a.sold || 0));
-            break;
-          case 'discount':
-            allProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-            break;
-          default:
-            break;
-        }
-
-        // Client-side pagination
-        const totalItems = allProducts.length;
-        const totalPagesCalc = Math.ceil(totalItems / productsPerPage);
-        setTotalPages(totalPagesCalc);
-        setTotalProducts(totalItems);
-
-        const startIndex = (page - 1) * productsPerPage;
-        const endIndex = startIndex + productsPerPage;
-        const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-        setProducts(paginatedProducts);
+      // ✅ Sort products theo tiêu chí
+      switch (sort) {
+        case 'newest':
+          allProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          break;
+        case 'price-asc':
+          allProducts.sort((a, b) => (a.finalPrice || a.price) - (b.finalPrice || b.price));
+          break;
+        case 'price-desc':
+          allProducts.sort((a, b) => (b.finalPrice || b.price) - (a.finalPrice || a.price));
+          break;
+        case 'best-selling':
+          allProducts.sort((a, b) => (b.sold || 0) - (a.sold || 0));
+          break;
+        case 'discount':
+          allProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
+          break;
+        case 'name-asc':
+          allProducts.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'name-desc':
+          allProducts.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        default:
+          break;
       }
-      
+
+      // ✅ Client-side pagination
+      const totalItems = allProducts.length;
+      const totalPagesCalc = Math.ceil(totalItems / productsPerPage);
+      setTotalPages(totalPagesCalc);
+      setTotalProducts(totalItems);
+
+      const startIndex = (page - 1) * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const paginatedProducts = allProducts.slice(startIndex, endIndex);
+
+      setProducts(paginatedProducts);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -110,11 +104,15 @@ export default function Products() {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    // First page
+    // First page button
     if (startPage > 1) {
       items.push(
         <Pagination.First key="first" onClick={() => handlePageChange(1)} />
       );
+    }
+
+    // Previous button
+    if (currentPage > 1) {
       items.push(
         <Pagination.Prev key="prev" onClick={() => handlePageChange(currentPage - 1)} />
       );
@@ -133,11 +131,15 @@ export default function Products() {
       );
     }
 
-    // Last page
-    if (endPage < totalPages) {
+    // Next button
+    if (currentPage < totalPages) {
       items.push(
         <Pagination.Next key="next" onClick={() => handlePageChange(currentPage + 1)} />
       );
+    }
+
+    // Last page button
+    if (endPage < totalPages) {
       items.push(
         <Pagination.Last key="last" onClick={() => handlePageChange(totalPages)} />
       );
@@ -176,12 +178,13 @@ export default function Products() {
                 onChange={handleSortChange}
                 className="sort-select"
               >
-                <option value="random">Random</option>
                 <option value="newest">Mới nhất</option>
                 <option value="best-selling">Bán chạy nhất</option>
                 <option value="price-asc">Giá tăng dần</option>
                 <option value="price-desc">Giá giảm dần</option>
                 <option value="discount">Giảm giá nhiều nhất</option>
+                <option value="name-asc">Tên A-Z</option>
+                <option value="name-desc">Tên Z-A</option>
               </Form.Select>
             </Col>
           </Row>
@@ -217,7 +220,7 @@ export default function Products() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="d-flex justify-content-center mt-5">
-                <Pagination size="lg">
+                <Pagination>
                   {renderPagination()}
                 </Pagination>
               </div>

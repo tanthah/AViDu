@@ -3,15 +3,22 @@ import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge, Image } from 
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice';
-import { fetchCart } from '../redux/cartSlice'; // ✅ THÊM
+import { fetchCart } from '../redux/cartSlice';
+import { fetchCategories } from '../redux/categorySlice'; // ✅ ADD
 import './css/Header.css';
 
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user, token } = useSelector((s) => s.auth);
-  const { cart } = useSelector((s) => s.cart); // ✅ THÊM
+  const { cart } = useSelector((s) => s.cart);
+  const { categories } = useSelector((s) => s.category); // ✅ ADD
   const [searchQuery, setSearchQuery] = useState('');
+
+  // ✅ Fetch categories on mount
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   // ✅ Fetch cart khi user đăng nhập
   useEffect(() => {
@@ -47,7 +54,6 @@ export default function Header() {
     return 'https://via.placeholder.com/40?text=U';
   };
 
-  // ✅ Lấy số lượng items trong cart
   const cartItemCount = cart?.totalQuantity || 0;
 
   return (
@@ -93,22 +99,28 @@ export default function Header() {
                 <i className="bi bi-info-circle me-1"></i>Giới thiệu
               </Nav.Link>
               
-              <NavDropdown title={<span><i className="bi bi-grid me-1"></i>Danh mục</span>} id="category-dropdown" className="category-link">
-                <NavDropdown.Item as={Link} to="/category/dien-thoai">
-                  <i className="bi bi-phone me-2"></i>Điện thoại
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/laptop">
-                  <i className="bi bi-laptop me-2"></i>Laptop
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/tablet">
-                  <i className="bi bi-tablet me-2"></i>Tablet
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/tai-nghe">
-                  <i className="bi bi-headphones me-2"></i>Tai nghe
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/category/phu-kien">
-                  <i className="bi bi-plug me-2"></i>Phụ kiện
-                </NavDropdown.Item>
+              {/* ✅ DYNAMIC CATEGORIES DROPDOWN */}
+              <NavDropdown 
+                title={<span><i className="bi bi-grid me-1"></i>Danh mục</span>} 
+                id="category-dropdown" 
+                className="category-link"
+              >
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <NavDropdown.Item 
+                      key={category._id}
+                      as={Link} 
+                      to={`/category/${category._id}`}
+                    >
+                      <i className="bi bi-tag me-2"></i>
+                      {category.name}
+                    </NavDropdown.Item>
+                  ))
+                ) : (
+                  <NavDropdown.Item disabled>
+                    Đang tải danh mục...
+                  </NavDropdown.Item>
+                )}
               </NavDropdown>
             </Nav>
 
@@ -130,7 +142,6 @@ export default function Header() {
             <Nav className="ms-auto align-items-center">
               <Nav.Link onClick={handleCartClick} className="position-relative me-3 cart-link">
                 <i className="bi bi-cart3 fs-5"></i>
-                {/* ✅ Hiển thị số lượng items trong cart */}
                 <Badge bg="danger" pill className="cart-badge">
                   {cartItemCount}
                 </Badge>

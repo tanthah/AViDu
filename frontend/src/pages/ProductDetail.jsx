@@ -1,9 +1,9 @@
-// frontend/src/pages/ProductDetail.jsx - FIXED VERSION
 import React, { useEffect, useState, useRef } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProductById, clearCurrentProduct } from '../redux/productSlice'
+import { addToCart } from '../redux/cartSlice'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation, Pagination, Thumbs } from 'swiper/modules'
 import Header from '../components/Header'
@@ -18,13 +18,16 @@ export default function ProductDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    const hasFetched = useRef(false) // Prevent double fetch
+    const hasFetched = useRef(false)
 
     const { currentProduct, loading, error } = useSelector((s) => s.products)
+    const { token } = useSelector((s) => s.auth)
+    const { updating } = useSelector((s) => s.cart)
+    
     const [quantity, setQuantity] = useState(1)
     const [thumbsSwiper, setThumbsSwiper] = useState(null)
+    const [addCartSuccess, setAddCartSuccess] = useState(false)
 
-    // Fetch product only once when ID changes
     useEffect(() => {
         if (!id) return;
 
@@ -35,11 +38,9 @@ export default function ProductDetail() {
         }
 
         return () => {
-            // ❌ KHÔNG reset hasFetched tại đây
             dispatch(clearCurrentProduct());
         };
     }, [id, dispatch]);
-
 
     const handleIncrease = () => {
         if (currentProduct && quantity < currentProduct.stock) {
@@ -53,8 +54,43 @@ export default function ProductDetail() {
         }
     }
 
-    const handleAddToCart = () => {
-        alert(`Thêm ${quantity} sản phẩm vào giỏ hàng!`)
+    // ✅ FIX: Add to Cart với dispatch thực sự
+    const handleAddToCart = async () => {
+        if (!token) {
+            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
+            navigate('/login')
+            return
+        }
+
+        try {
+            await dispatch(addToCart({ 
+                productId: currentProduct._id, 
+                quantity 
+            })).unwrap()
+            
+            setAddCartSuccess(true)
+            setTimeout(() => setAddCartSuccess(false), 3000)
+        } catch (err) {
+            alert(err || 'Không thể thêm vào giỏ hàng')
+        }
+    }
+
+    const handleBuyNow = async () => {
+        if (!token) {
+            alert('Vui lòng đăng nhập để mua hàng')
+            navigate('/login')
+            return
+        }
+
+        try {
+            await dispatch(addToCart({ 
+                productId: currentProduct._id, 
+                quantity 
+            })).unwrap()
+            navigate('/cart')
+        } catch (err) {
+            alert(err || 'Không thể thêm vào giỏ hàng')
+        }
     }
 
     if (loading) {
@@ -116,6 +152,12 @@ export default function ProductDetail() {
             <Header />
 
             <Container className="py-4">
+                {addCartSuccess && (
+                    <Alert variant="success" dismissible onClose={() => setAddCartSuccess(false)}>
+                        <i className="bi bi-check-circle me-2"></i>
+                        Đã thêm sản phẩm vào giỏ hàng!
+                    </Alert>
+                )}
 
                 <Row className="g-4">
                     <Col lg={5}>
@@ -221,7 +263,7 @@ export default function ProductDetail() {
                                         variant="outline-secondary"
                                         size="sm"
                                         onClick={handleDecrease}
-                                        disabled={quantity <= 1 || isOutOfStock}
+                                        disabled={quantity <= 1 || isOutOfStock || updating}
                                     >
                                         <i className="bi bi-dash"></i>
                                     </Button>
@@ -235,7 +277,7 @@ export default function ProductDetail() {
                                         variant="outline-secondary"
                                         size="sm"
                                         onClick={handleIncrease}
-                                        disabled={quantity >= product.stock || isOutOfStock}
+                                        disabled={quantity >= product.stock || isOutOfStock || updating}
                                     >
                                         <i className="bi bi-plus"></i>
                                     </Button>
@@ -244,21 +286,42 @@ export default function ProductDetail() {
 
                             <div className="action-buttons d-flex gap-2">
                                 <Button
-                                    variant="primary"
+                                    variant="outline-primary"
                                     size="lg"
                                     className="flex-grow-1"
                                     onClick={handleAddToCart}
-                                    disabled={isOutOfStock}
+                                    disabled={isOutOfStock || updating}
                                 >
-                                    <i className="bi bi-cart-plus me-2"></i>
-                                    {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+                                    {updating ? (
+                                        <>
+                                            <Spinner animation="border" size="sm" className="me-2" />
+                                            Đang thêm...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-cart-plus me-2"></i>
+                                            Thêm vào giỏ
+                                        </>
+                                    )}
                                 </Button>
                                 <Button
-                                    variant="outline-danger"
+                                    variant="danger"
                                     size="lg"
-                                    disabled={isOutOfStock}
+                                    className="flex-grow-1"
+                                    onClick={handleBuyNow}
+                                    disabled={isOutOfStock || updating}
                                 >
-                                    <i className="bi bi-heart"></i>
+                                    {updating ? (
+                                        <>
+                                            <Spinner animation="border" size="sm" className="me-2" />
+                                            Đang xử lý...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-lightning-fill me-2"></i>
+                                            Mua ngay
+                                        </>
+                                    )}
                                 </Button>
                             </div>
 

@@ -4,6 +4,7 @@ import editUserReducer from './redux/editUserSlice'
 import registerReducer from './redux/registerSlice'
 import productReducer from './redux/productSlice'
 import cartReducer from './redux/cartSlice' // ✅ THÊM IMPORT
+import categoryReducer from "./redux/categorySlice";
 
 const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
     register: registerReducer,
     products: productReducer,
     cart: cartReducer, // ✅ THÊM CART REDUCER
+    category: categoryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

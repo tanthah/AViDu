@@ -3,8 +3,13 @@ import axiosClient from './axios'
 
 const cartApi = {
     getCart: () => {
-        return axiosClient.get('/cart')
+        return axiosClient.get('/cart', {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        })
     },
+
     addToCart: (productId, quantity = 1) => {
         return axiosClient.post('/cart/add', { productId, quantity })
     },

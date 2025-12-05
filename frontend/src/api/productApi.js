@@ -4,12 +4,6 @@ const productApi = {
     getAll: () => {
         return axiosClient.get('/products')
     },
-    // ✅ THÊM: Random products với pagination
-    getRandom: (page = 1, limit = 16) => {
-        return axiosClient.get('/products/random', {
-            params: { page, limit }
-        })
-    },
     getDetail: (id) => {
         return axiosClient.get(`/products/${id}`)
     },

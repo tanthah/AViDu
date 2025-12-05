@@ -12,6 +12,7 @@ import productRoutes from './src/routes/productRoutes.js'
 import cartRoutes from './src/routes/cartRoutes.js'
 import orderRoutes from './src/routes/orderRoutes.js'
 import addressRoutes from './src/routes/addressRoutes.js' // ✅ THÊM
+import categoryRoutes from "./src/routes/categoryRoutes.js";
 
 // Import security middlewares
 import {
@@ -57,6 +58,7 @@ app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/addresses', addressRoutes) // ✅ THÊM ADDRESS ROUTES
+app.use("/api/category", categoryRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

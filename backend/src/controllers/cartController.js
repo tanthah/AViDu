@@ -1,4 +1,4 @@
-// backend/src/controllers/cartController.js
+// backend/src/controllers/cartController.js - FIXED
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 
@@ -89,11 +89,17 @@ export const addToCart = async (req, res) => {
     }
 };
 
-// CẬP NHẬT SỐ LƯỢNG
+// CẬP NHẬT SỐ LƯỢNG - FIXED
 export const updateCartItem = async (req, res) => {
     try {
         const userId = req.user.id;
         const { productId, quantity } = req.body;
+
+        console.log('📝 Update cart request:', { userId, productId, quantity });
+
+        if (!productId) {
+            return res.status(400).json({ success: false, message: 'Product ID is required' });
+        }
 
         if (quantity < 1) {
             return res.status(400).json({ success: false, message: 'Số lượng phải lớn hơn 0' });
@@ -104,12 +110,19 @@ export const updateCartItem = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Không tìm thấy giỏ hàng' });
         }
 
-        const itemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+        const itemIndex = cart.items.findIndex(
+            item => item.productId.toString() === productId.toString()
+        );
+        
         if (itemIndex === -1) {
             return res.status(404).json({ success: false, message: 'Sản phẩm không có trong giỏ hàng' });
         }
 
         const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
+        }
+
         if (quantity > product.stock) {
             return res.status(400).json({ 
                 success: false, 
@@ -117,17 +130,20 @@ export const updateCartItem = async (req, res) => {
             });
         }
 
+        // Update quantity
         cart.items[itemIndex].quantity = quantity;
 
-        // Tính lại tổng
+        // Recalculate totals
         cart.totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
         cart.totalPrice = cart.items.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
 
         await cart.save();
         await cart.populate('items.productId');
 
+        console.log('✅ Cart updated successfully');
         res.json({ success: true, cart, message: 'Đã cập nhật giỏ hàng' });
     } catch (err) {
+        console.error('❌ Update cart error:', err);
         res.status(500).json({ success: false, message: err.message });
     }
 };

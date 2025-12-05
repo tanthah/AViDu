@@ -1,4 +1,4 @@
-// frontend/src/pages/Cart.jsx
+// frontend/src/pages/Cart.jsx - FIXED
 import React, { useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Image, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
@@ -22,20 +22,40 @@ export default function Cart() {
     dispatch(fetchCart());
   }, [dispatch, token, navigate]);
 
-  const handleUpdateQuantity = (productId, newQuantity) => {
+  const handleUpdateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
-    dispatch(updateCartItem({ productId, quantity: newQuantity }));
-  };
-
-  const handleRemoveItem = (productId) => {
-    if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-      dispatch(removeFromCart(productId));
+    
+    console.log('📝 Updating quantity:', { productId, newQuantity });
+    
+    try {
+      await dispatch(updateCartItem({ 
+        productId: productId, 
+        quantity: newQuantity 
+      })).unwrap();
+      console.log('✅ Quantity updated');
+    } catch (err) {
+      console.error('❌ Update failed:', err);
+      alert(err || 'Lỗi khi cập nhật giỏ hàng');
     }
   };
 
-  const handleClearCart = () => {
+  const handleRemoveItem = async (productId) => {
+    if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+      try {
+        await dispatch(removeFromCart(productId)).unwrap();
+      } catch (err) {
+        alert(err || 'Lỗi khi xóa sản phẩm');
+      }
+    }
+  };
+
+  const handleClearCart = async () => {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) {
-      dispatch(clearCart());
+      try {
+        await dispatch(clearCart()).unwrap();
+      } catch (err) {
+        alert(err || 'Lỗi khi xóa giỏ hàng');
+      }
     }
   };
 
@@ -103,75 +123,79 @@ export default function Cart() {
 
         <Row>
           <Col lg={8}>
-            {cart.items.map((item) => (
-              <Card key={item._id} className="mb-3 cart-item-card">
-                <Card.Body>
-                  <Row className="align-items-center">
-                    <Col xs={3} md={2}>
-                      <Image
-                        src={item.productImage || 'https://via.placeholder.com/100'}
-                        rounded
-                        style={{ width: '100%', maxWidth: '100px', cursor: 'pointer' }}
-                        onClick={() => navigate(`/product/${item.productId._id}`)}
-                      />
-                    </Col>
-                    <Col xs={9} md={4}>
-                      <h6 
-                        className="mb-1 product-name"
-                        onClick={() => navigate(`/product/${item.productId._id}`)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        {item.productName}
-                      </h6>
-                      <div className="text-danger fw-bold">
-                        {item.finalPrice.toLocaleString('vi-VN')}đ
-                      </div>
-                      {item.price > item.finalPrice && (
-                        <small className="text-muted text-decoration-line-through">
-                          {item.price.toLocaleString('vi-VN')}đ
-                        </small>
-                      )}
-                    </Col>
-                    <Col xs={6} md={3} className="mt-2 mt-md-0">
-                      <div className="quantity-controls d-flex align-items-center gap-2">
-                        <Button
-                          variant="outline-secondary"
-                          size="sm"
-                          onClick={() => handleUpdateQuantity(item.productId._id, item.quantity - 1)}
-                          disabled={updating || item.quantity <= 1}
+            {cart.items.map((item) => {
+              const productId = item.productId?._id || item.productId;
+              
+              return (
+                <Card key={item._id} className="mb-3 cart-item-card">
+                  <Card.Body>
+                    <Row className="align-items-center">
+                      <Col xs={3} md={2}>
+                        <Image
+                          src={item.productImage || 'https://via.placeholder.com/100'}
+                          rounded
+                          style={{ width: '100%', maxWidth: '100px', cursor: 'pointer' }}
+                          onClick={() => navigate(`/product/${productId}`)}
+                        />
+                      </Col>
+                      <Col xs={9} md={4}>
+                        <h6 
+                          className="mb-1 product-name"
+                          onClick={() => navigate(`/product/${productId}`)}
+                          style={{ cursor: 'pointer' }}
                         >
-                          <i className="bi bi-dash"></i>
-                        </Button>
-                        <span className="fw-bold px-2">{item.quantity}</span>
+                          {item.productName}
+                        </h6>
+                        <div className="text-danger fw-bold">
+                          {item.finalPrice.toLocaleString('vi-VN')}đ
+                        </div>
+                        {item.price > item.finalPrice && (
+                          <small className="text-muted text-decoration-line-through">
+                            {item.price.toLocaleString('vi-VN')}đ
+                          </small>
+                        )}
+                      </Col>
+                      <Col xs={6} md={3} className="mt-2 mt-md-0">
+                        <div className="quantity-controls d-flex align-items-center gap-2">
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(productId, item.quantity - 1)}
+                            disabled={updating || item.quantity <= 1}
+                          >
+                            <i className="bi bi-dash"></i>
+                          </Button>
+                          <span className="fw-bold px-2">{item.quantity}</span>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => handleUpdateQuantity(productId, item.quantity + 1)}
+                            disabled={updating}
+                          >
+                            <i className="bi bi-plus"></i>
+                          </Button>
+                        </div>
+                      </Col>
+                      <Col xs={4} md={2} className="text-end mt-2 mt-md-0">
+                        <div className="fw-bold text-primary">
+                          {(item.finalPrice * item.quantity).toLocaleString('vi-VN')}đ
+                        </div>
+                      </Col>
+                      <Col xs={2} md={1} className="text-end mt-2 mt-md-0">
                         <Button
-                          variant="outline-secondary"
+                          variant="outline-danger"
                           size="sm"
-                          onClick={() => handleUpdateQuantity(item.productId._id, item.quantity + 1)}
+                          onClick={() => handleRemoveItem(productId)}
                           disabled={updating}
                         >
-                          <i className="bi bi-plus"></i>
+                          <i className="bi bi-trash"></i>
                         </Button>
-                      </div>
-                    </Col>
-                    <Col xs={4} md={2} className="text-end mt-2 mt-md-0">
-                      <div className="fw-bold text-primary">
-                        {(item.finalPrice * item.quantity).toLocaleString('vi-VN')}đ
-                      </div>
-                    </Col>
-                    <Col xs={2} md={1} className="text-end mt-2 mt-md-0">
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleRemoveItem(item.productId._id)}
-                        disabled={updating}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </Button>
-                    </Col>
-                  </Row>
-                </Card.Body>
-              </Card>
-            ))}
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              );
+            })}
           </Col>
 
           <Col lg={4}>
