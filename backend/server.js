@@ -1,18 +1,20 @@
+// backend/server.js - UPDATED
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import connectDB from './src/config/db.js'
+
+// Import routes
 import authRoutes from './src/routes/auth.js'
 import registerRoutes from './src/routes/registerRoutes.js'
-import connectDB from './src/config/db.js'
 import editUserRoutes from './src/routes/editUserRoutes.js'
 import productRoutes from './src/routes/productRoutes.js'
+import cartRoutes from './src/routes/cartRoutes.js'
+import orderRoutes from './src/routes/orderRoutes.js'
 
 // Import security middlewares
 import {
-  helmetConfig,
-  xssProtection,
   hppProtection,
-  sanitizeInput,
   checkContentType
 } from './src/middleware/security.js'
 import { generalLimiter } from './src/middleware/rateLimiter.js'
@@ -20,7 +22,7 @@ import { generalLimiter } from './src/middleware/rateLimiter.js'
 const app = express()
 const PORT = process.env.PORT || 4000
 
-// 5. CORS - Cho phép frontend truy cập (MUST BE BEFORE ROUTES)
+// CORS
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:4000'],
   credentials: true,
@@ -29,45 +31,32 @@ app.use(cors({
   optionsSuccessStatus: 200
 }))
 
-
-// ===== SECURITY MIDDLEWARES =====
-// 1. Helmet - Bảo mật HTTP headers (MOVE AFTER CORS)
-// Commented out temporarily as it might interfere with CORS
-// app.use(helmetConfig)
-
-// 2. XSS Protection - Chống tấn công XSS
-//app.use(xssProtection)
-
-// 3. HPP Protection - Chống HTTP Parameter Pollution
+// Security Middlewares
 app.use(hppProtection)
-
-// 4. Rate Limiting - Giới hạn số request
 app.use(generalLimiter)
 
-
-// 6. Body parsers với giới hạn kích thước
+// Body parsers
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// 7. Sanitize input data
-//app.use(sanitizeInput)
-
-// 8. Check Content-Type
+// Check Content-Type
 app.use(checkContentType)
 
-// ===== DATABASE CONNECTION =====
+// Database Connection
 connectDB()
 
-// ===== STATIC FILES =====
+// Static Files
 app.use('/uploads', express.static('uploads'))
 
-// ===== API ROUTES =====
+// API Routes
 app.use('/api/auth', authRoutes)
 app.use('/api/register', registerRoutes)
 app.use('/api/user', editUserRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/cart', cartRoutes)        // NEW
+app.use('/api/orders', orderRoutes)     // NEW
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
@@ -76,7 +65,6 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-// ===== ERROR HANDLING =====
 // 404 Handler
 app.use((req, res) => {
   res.status(404).json({
@@ -89,7 +77,6 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack)
 
-  // Mongoose validation error
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       success: false,
@@ -98,7 +85,6 @@ app.use((err, req, res, next) => {
     })
   }
 
-  // Mongoose duplicate key error
   if (err.code === 11000) {
     return res.status(400).json({
       success: false,
@@ -106,7 +92,6 @@ app.use((err, req, res, next) => {
     })
   }
 
-  // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(400).json({
       success: false,
@@ -121,15 +106,6 @@ app.use((err, req, res, next) => {
     })
   }
 
-  // Multer file upload errors
-  if (err.name === 'MulterError') {
-    return res.status(400).json({
-      success: false,
-      message: 'Lỗi upload file: ' + err.message
-    })
-  }
-
-  // Default error
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Có lỗi xảy ra trên server!',
@@ -137,7 +113,7 @@ app.use((err, req, res, next) => {
   })
 })
 
-// ===== START SERVER =====
+// Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`)
   console.log(`🔒 Security middlewares đã được kích hoạt`)

@@ -1,6 +1,8 @@
+// backend/src/routes/productRoutes.js - UPDATED
 import express from 'express'
 import {
     getAllProducts,
+    getRandomProducts,
     getProductDetail,
     getBestSellingProducts,
     getNewestProducts,
@@ -15,18 +17,18 @@ const router = express.Router()
 
 // Public routes
 router.get('/', getAllProducts)
+router.get('/random', getRandomProducts) // NEW: Random với phân trang
 router.get('/best-selling', getBestSellingProducts)
 router.get('/newest', getNewestProducts)
 router.get('/most-viewed', getMostViewedProducts)
 router.get('/highest-discount', getHighestDiscountProducts)
 
-// Product detail routes
+// Product detail
 router.get('/:id', getProductDetail)
-// router.post('/:id/view', incrementView) // View increment is now handled in getProductDetail
 
-// Admin routes - TODO: Thêm authMiddleware và check admin role
-router.post('/', createProduct)           // CREATE
-router.put('/:id', updateProduct)         // UPDATE
-router.delete('/:id', deleteProduct)      // DELETE
+// Admin routes - TODO: Add authentication middleware
+router.post('/', createProduct)
+router.put('/:id', updateProduct)
+router.delete('/:id', deleteProduct)
 
 export default router
