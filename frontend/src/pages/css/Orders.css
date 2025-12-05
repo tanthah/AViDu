@@ -1,0 +1,26 @@
+/* frontend/src/pages/css/Orders.css */
+.orders-page {
+    min-height: 60vh;
+}
+
+.order-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #0d6efd;
+}
+
+.order-items img {
+    transition: transform 0.3s ease;
+}
+
+.order-items img:hover {
+    transform: scale(1.05);
+}
+.order-status {
+    font-weight: bold;
+    color: #28a745;
+}

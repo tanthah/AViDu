@@ -1,0 +1,36 @@
+/* frontend/src/pages/css/Cart.css */
+.cart-page {
+    min-height: 60vh;
+}
+
+.cart-item-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.cart-item-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-name {
+    color: #2c3e50;
+    transition: color 0.2s;
+}
+
+.product-name:hover {
+    color: #0d6efd;
+}
+
+.quantity-controls button {
+    width: 36px;
+    height: 36px;
+}
+
+.cart-summary {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.checkout-button {
+    background-color: #0d6efd;
+    color: white;
+    transition: background-color 0.3s;
+}
