@@ -1,4 +1,4 @@
-// frontend/src/redux/categorySlice.js
+// frontend/src/redux/categorySlice.js - FIXED
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import categoryApi from '../api/categoryApi';
 
@@ -38,7 +38,7 @@ const initialState = {
 };
 
 const categorySlice = createSlice({
-    name: 'categories',
+    name: 'categories', // Giữ nguyên 'categories'
     initialState,
     reducers: {
         clearCategoryProducts: (state) => {

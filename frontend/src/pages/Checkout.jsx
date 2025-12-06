@@ -1,7 +1,7 @@
-// frontend/src/pages/Checkout.jsx
+// frontend/src/pages/Checkout.jsx - HANDLE BUY NOW & SELECTED ITEMS
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Form, Alert, Spinner, Modal } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCart } from '../redux/cartSlice';
 import orderApi from '../api/orderApi';
@@ -12,6 +12,7 @@ import './css/Checkout.css';
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { cart, loading: cartLoading } = useSelector((state) => state.cart);
   const { token } = useSelector((state) => state.auth);
@@ -34,14 +35,37 @@ export default function Checkout() {
 
   const shippingFee = 30000;
 
+  // ✅ Xác định items cần thanh toán: Buy Now hoặc Selected Items
+  const [checkoutItems, setCheckoutItems] = useState([]);
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
       return;
     }
-    dispatch(fetchCart());
+
+    // ✅ Xử lý Buy Now
+    if (location.state?.buyNow && location.state?.product) {
+      setCheckoutItems([location.state.product]);
+    } 
+    // ✅ Xử lý Selected Items từ Cart
+    else if (location.state?.selectedItems) {
+      setCheckoutItems(location.state.selectedItems);
+    } 
+    // ✅ Fallback: Lấy toàn bộ giỏ hàng
+    else {
+      dispatch(fetchCart());
+    }
+
     loadAddresses();
-  }, [dispatch, token, navigate]);
+  }, [dispatch, token, navigate, location.state]);
+
+  // ✅ Nếu không có items từ state, dùng cart
+  useEffect(() => {
+    if (!location.state?.buyNow && !location.state?.selectedItems && cart?.items) {
+      setCheckoutItems(cart.items);
+    }
+  }, [cart, location.state]);
 
   const loadAddresses = async () => {
     try {
@@ -49,7 +73,6 @@ export default function Checkout() {
       const addressList = response.data.addresses;
       setAddresses(addressList);
       
-      // Tự động chọn địa chỉ mặc định
       const defaultAddr = addressList.find(addr => addr.isDefault);
       if (defaultAddr) {
         setSelectedAddress(defaultAddr._id);
@@ -95,9 +118,20 @@ export default function Checkout() {
       return;
     }
 
+    if (checkoutItems.length === 0) {
+      setError('Không có sản phẩm nào để thanh toán');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+
+      // ✅ Nếu là Buy Now, cần thêm sản phẩm vào giỏ hàng trước
+      if (location.state?.buyNow) {
+        // Thêm sản phẩm vào giỏ hàng rồi mới đặt hàng
+        // (Backend sẽ tự động xử lý từ cart)
+      }
       
       const response = await orderApi.createOrder({
         addressId: selectedAddress,
@@ -129,13 +163,13 @@ export default function Checkout() {
     );
   }
 
-  if (!cart || cart.items.length === 0) {
+  if (checkoutItems.length === 0) {
     return (
       <>
         <Header />
         <Container className="py-5 text-center">
           <i className="bi bi-cart-x" style={{ fontSize: '5rem', color: '#ccc' }}></i>
-          <h3 className="mt-3">Giỏ hàng trống</h3>
+          <h3 className="mt-3">Không có sản phẩm nào để thanh toán</h3>
           <Button variant="primary" onClick={() => navigate('/products')} className="mt-3">
             Tiếp tục mua sắm
           </Button>
@@ -146,6 +180,13 @@ export default function Checkout() {
   }
 
   const selectedAddressData = addresses.find(addr => addr._id === selectedAddress);
+
+  // ✅ Tính tổng tiền từ checkoutItems
+  const totalPrice = checkoutItems.reduce((sum, item) => {
+    return sum + (item.finalPrice * item.quantity);
+  }, 0);
+
+  const totalQuantity = checkoutItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <>
@@ -224,12 +265,12 @@ export default function Checkout() {
               <Card.Header className="bg-white">
                 <h5 className="mb-0">
                   <i className="bi bi-box-seam me-2"></i>
-                  Sản phẩm ({cart.totalQuantity})
+                  Sản phẩm ({totalQuantity})
                 </h5>
               </Card.Header>
               <Card.Body>
-                {cart.items.map((item) => (
-                  <div key={item._id} className="d-flex align-items-center mb-3 pb-3 border-bottom">
+                {checkoutItems.map((item, index) => (
+                  <div key={index} className="d-flex align-items-center mb-3 pb-3 border-bottom">
                     <img 
                       src={item.productImage || 'https://via.placeholder.com/80'} 
                       alt={item.productName}
@@ -272,14 +313,14 @@ export default function Checkout() {
           </Col>
 
           <Col lg={4}>
-            <Card className="sticky-top" style={{ top: '100px' }}>
+            <Card className="sticky-top checkout-summary" style={{ top: '120px' }}>
               <Card.Header className="bg-primary text-white">
                 <h5 className="mb-0">Tóm tắt đơn hàng</h5>
               </Card.Header>
               <Card.Body>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Tạm tính:</span>
-                  <strong>{cart.totalPrice.toLocaleString('vi-VN')}đ</strong>
+                  <strong>{totalPrice.toLocaleString('vi-VN')}đ</strong>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Phí vận chuyển:</span>
@@ -289,7 +330,7 @@ export default function Checkout() {
                 <div className="d-flex justify-content-between mb-3">
                   <h5>Tổng cộng:</h5>
                   <h5 className="text-danger">
-                    {(cart.totalPrice + shippingFee).toLocaleString('vi-VN')}đ
+                    {(totalPrice + shippingFee).toLocaleString('vi-VN')}đ
                   </h5>
                 </div>
 

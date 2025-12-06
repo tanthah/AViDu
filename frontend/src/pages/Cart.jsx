@@ -1,6 +1,6 @@
-// frontend/src/pages/Cart.jsx - FIXED
-import React, { useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Image, Alert, Spinner } from 'react-bootstrap';
+// frontend/src/pages/Cart.jsx - WITH CHECKBOX SELECTION
+import React, { useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Button, Image, Alert, Spinner, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCart, updateCartItem, removeFromCart, clearCart } from '../redux/cartSlice';
@@ -14,6 +14,9 @@ export default function Cart() {
   const { cart, loading, updating, error } = useSelector((state) => state.cart);
   const { token } = useSelector((state) => state.auth);
 
+  // ✅ State để lưu các sản phẩm được chọn
+  const [selectedItems, setSelectedItems] = useState([]);
+
   useEffect(() => {
     if (!token) {
       navigate('/login');
@@ -22,19 +25,36 @@ export default function Cart() {
     dispatch(fetchCart());
   }, [dispatch, token, navigate]);
 
+  // ✅ Chọn/Bỏ chọn tất cả
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allProductIds = cart.items.map(item => item.productId?._id || item.productId);
+      setSelectedItems(allProductIds);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  // ✅ Chọn/Bỏ chọn từng sản phẩm
+  const handleSelectItem = (productId) => {
+    setSelectedItems(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
   const handleUpdateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
-    
-    console.log('📝 Updating quantity:', { productId, newQuantity });
     
     try {
       await dispatch(updateCartItem({ 
         productId: productId, 
         quantity: newQuantity 
       })).unwrap();
-      console.log('✅ Quantity updated');
     } catch (err) {
-      console.error('❌ Update failed:', err);
       alert(err || 'Lỗi khi cập nhật giỏ hàng');
     }
   };
@@ -43,6 +63,8 @@ export default function Cart() {
     if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
       try {
         await dispatch(removeFromCart(productId)).unwrap();
+        // Xóa khỏi selectedItems nếu có
+        setSelectedItems(prev => prev.filter(id => id !== productId));
       } catch (err) {
         alert(err || 'Lỗi khi xóa sản phẩm');
       }
@@ -53,14 +75,30 @@ export default function Cart() {
     if (window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) {
       try {
         await dispatch(clearCart()).unwrap();
+        setSelectedItems([]);
       } catch (err) {
         alert(err || 'Lỗi khi xóa giỏ hàng');
       }
     }
   };
 
+  // ✅ Thanh toán chỉ các sản phẩm được chọn
   const handleCheckout = () => {
-    navigate('/checkout');
+    if (selectedItems.length === 0) {
+      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
+
+    const selectedProducts = cart.items.filter(item => {
+      const productId = item.productId?._id || item.productId;
+      return selectedItems.includes(productId);
+    });
+
+    navigate('/checkout', {
+      state: {
+        selectedItems: selectedProducts
+      }
+    });
   };
 
   if (loading) {
@@ -94,6 +132,17 @@ export default function Cart() {
     );
   }
 
+  // ✅ Tính tổng tiền chỉ cho các sản phẩm được chọn
+  const selectedTotal = cart.items
+    .filter(item => selectedItems.includes(item.productId?._id || item.productId))
+    .reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+
+  const selectedQuantity = cart.items
+    .filter(item => selectedItems.includes(item.productId?._id || item.productId))
+    .reduce((sum, item) => sum + item.quantity, 0);
+
+  const isAllSelected = cart.items.length > 0 && selectedItems.length === cart.items.length;
+
   return (
     <>
       <Header />
@@ -123,14 +172,34 @@ export default function Cart() {
 
         <Row>
           <Col lg={8}>
+            {/* ✅ Checkbox chọn tất cả */}
+            <Card className="mb-3 p-3">
+              <Form.Check
+                type="checkbox"
+                label={<strong>Chọn tất cả ({cart.items.length} sản phẩm)</strong>}
+                checked={isAllSelected}
+                onChange={handleSelectAll}
+              />
+            </Card>
+
             {cart.items.map((item) => {
               const productId = item.productId?._id || item.productId;
+              const isSelected = selectedItems.includes(productId);
               
               return (
-                <Card key={item._id} className="mb-3 cart-item-card">
+                <Card key={item._id} className={`mb-3 cart-item-card ${isSelected ? 'border-primary' : ''}`}>
                   <Card.Body>
                     <Row className="align-items-center">
-                      <Col xs={3} md={2}>
+                      {/* ✅ Checkbox chọn sản phẩm */}
+                      <Col xs={1} className="text-center">
+                        <Form.Check
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectItem(productId)}
+                        />
+                      </Col>
+
+                      <Col xs={2} md={2}>
                         <Image
                           src={item.productImage || 'https://via.placeholder.com/100'}
                           rounded
@@ -138,7 +207,8 @@ export default function Cart() {
                           onClick={() => navigate(`/product/${productId}`)}
                         />
                       </Col>
-                      <Col xs={9} md={4}>
+
+                      <Col xs={9} md={3}>
                         <h6 
                           className="mb-1 product-name"
                           onClick={() => navigate(`/product/${productId}`)}
@@ -155,6 +225,7 @@ export default function Cart() {
                           </small>
                         )}
                       </Col>
+
                       <Col xs={6} md={3} className="mt-2 mt-md-0">
                         <div className="quantity-controls d-flex align-items-center gap-2">
                           <Button
@@ -176,11 +247,13 @@ export default function Cart() {
                           </Button>
                         </div>
                       </Col>
+
                       <Col xs={4} md={2} className="text-end mt-2 mt-md-0">
                         <div className="fw-bold text-primary">
                           {(item.finalPrice * item.quantity).toLocaleString('vi-VN')}đ
                         </div>
                       </Col>
+
                       <Col xs={2} md={1} className="text-end mt-2 mt-md-0">
                         <Button
                           variant="outline-danger"
@@ -205,22 +278,26 @@ export default function Cart() {
               </Card.Header>
               <Card.Body>
                 <div className="d-flex justify-content-between mb-2">
-                  <span>Tổng sản phẩm:</span>
-                  <strong>{cart.totalQuantity}</strong>
+                  <span>Sản phẩm đã chọn:</span>
+                  <strong>{selectedQuantity}</strong>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Tạm tính:</span>
-                  <strong>{cart.totalPrice.toLocaleString('vi-VN')}đ</strong>
+                  <strong>{selectedTotal.toLocaleString('vi-VN')}đ</strong>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span>Phí vận chuyển:</span>
-                  <strong className="text-success">30,000đ</strong>
+                  <strong className="text-success">
+                    {selectedItems.length > 0 ? '30,000đ' : '0đ'}
+                  </strong>
                 </div>
                 <hr />
                 <div className="d-flex justify-content-between mb-3">
                   <h5>Tổng cộng:</h5>
                   <h5 className="text-danger">
-                    {(cart.totalPrice + 30000).toLocaleString('vi-VN')}đ
+                    {selectedItems.length > 0 
+                      ? (selectedTotal + 30000).toLocaleString('vi-VN')
+                      : '0'}đ
                   </h5>
                 </div>
                 <Button
@@ -228,10 +305,10 @@ export default function Cart() {
                   size="lg"
                   className="w-100 mb-2"
                   onClick={handleCheckout}
-                  disabled={updating}
+                  disabled={updating || selectedItems.length === 0}
                 >
                   <i className="bi bi-credit-card me-2"></i>
-                  Tiến hành thanh toán
+                  Thanh toán ({selectedItems.length})
                 </Button>
                 <Button
                   variant="outline-primary"

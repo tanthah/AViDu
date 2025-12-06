@@ -1,7 +1,8 @@
+/* frontend/src/components/css/Header.css - FIXED Z-INDEX */
 .header-main {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 1000; /* ✅ FIXED: Đảm bảo luôn cao nhất */
 }
 
 .top-bar {
@@ -9,11 +10,16 @@
   color: white;
   padding: 3px 0;
   font-size: 0.8rem;
+  position: relative;
+  z-index: 1001; /* ✅ Cao hơn main-navbar */
 }
 
 .main-navbar {
   padding-top: 0.3rem !important;
   padding-bottom: 0.3rem !important;
+  position: relative;
+  z-index: 1000;
+  background: white;
 }
 
 .brand-logo {
@@ -100,6 +106,7 @@
   left: 100%;
   transform: translate(-50%, -50%);
   font-size: 0.7rem;
+  z-index: 1;
 }
 
 /* User Dropdown */
@@ -124,6 +131,7 @@
   border: none;
   border-radius: 8px;
   padding: 0.5rem 0;
+  z-index: 1050; /* ✅ Cao hơn header */
 }
 
 .user-dropdown .dropdown-item {
@@ -140,6 +148,11 @@
 #category-dropdown .dropdown-toggle,
 #user-dropdown .dropdown-toggle {
   font-size: 0.9rem;
+}
+
+/* ✅ FIXED: Đảm bảo dropdown category không bị che */
+#category-dropdown .dropdown-menu {
+  z-index: 1050;
 }
 
 @media (max-width: 991px) {

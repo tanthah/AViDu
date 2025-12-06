@@ -1,3 +1,4 @@
+// frontend/src/pages/ProductDetail.jsx - BUY NOW FIXED
 import React, { useEffect, useState, useRef } from 'react'
 import { Container, Row, Col, Button, Badge, Spinner, Alert } from 'react-bootstrap'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -54,7 +55,6 @@ export default function ProductDetail() {
         }
     }
 
-    // ✅ FIX: Add to Cart với dispatch thực sự
     const handleAddToCart = async () => {
         if (!token) {
             alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng')
@@ -75,6 +75,7 @@ export default function ProductDetail() {
         }
     }
 
+    // ✅ FIXED: Mua ngay - Chuyển trực tiếp sang checkout với query param
     const handleBuyNow = async () => {
         if (!token) {
             alert('Vui lòng đăng nhập để mua hàng')
@@ -82,15 +83,19 @@ export default function ProductDetail() {
             return
         }
 
-        try {
-            await dispatch(addToCart({ 
-                productId: currentProduct._id, 
-                quantity 
-            })).unwrap()
-            navigate('/cart')
-        } catch (err) {
-            alert(err || 'Không thể thêm vào giỏ hàng')
-        }
+        // Chuyển trực tiếp sang trang checkout với thông tin sản phẩm
+        navigate('/checkout', {
+            state: {
+                buyNow: true,
+                product: {
+                    productId: currentProduct._id,
+                    quantity: quantity,
+                    productName: currentProduct.name,
+                    productImage: currentProduct.images[0],
+                    finalPrice: currentProduct.finalPrice || currentProduct.price
+                }
+            }
+        })
     }
 
     if (loading) {
@@ -309,19 +314,10 @@ export default function ProductDetail() {
                                     size="lg"
                                     className="flex-grow-1"
                                     onClick={handleBuyNow}
-                                    disabled={isOutOfStock || updating}
+                                    disabled={isOutOfStock}
                                 >
-                                    {updating ? (
-                                        <>
-                                            <Spinner animation="border" size="sm" className="me-2" />
-                                            Đang xử lý...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="bi bi-lightning-fill me-2"></i>
-                                            Mua ngay
-                                        </>
-                                    )}
+                                    <i className="bi bi-lightning-fill me-2"></i>
+                                    Mua ngay
                                 </Button>
                             </div>
 

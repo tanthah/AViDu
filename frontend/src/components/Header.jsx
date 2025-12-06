@@ -54,6 +54,10 @@ export default function Header() {
     return 'https://via.placeholder.com/40?text=U';
   };
 
+  const handleImageError = (e) => {
+    e.target.src = 'https://via.placeholder.com/40?text=Avatar'
+  }
+
   const cartItemCount = cart?.totalQuantity || 0;
 
   return (
@@ -155,15 +159,13 @@ export default function Header() {
                         src={getAvatarUrl()}
                         roundedCircle
                         style={{ 
-                          width: '35px', 
-                          height: '35px', 
+                          width: '40px', 
+                          height: '40px', 
                           objectFit: 'cover',
                           marginRight: '8px',
                           border: '2px solid #0d6efd'
                         }}
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/40?text=U';
-                        }}
+                        onError={handleImageError}
                       />
                       <span className="d-none d-md-inline">{user?.name || 'User'}</span>
                     </div>

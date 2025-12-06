@@ -1,4 +1,4 @@
-// frontend/src/pages/CategoryProducts.jsx - WITH LAZY LOADING
+// frontend/src/pages/CategoryProducts.jsx - FIXED
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Container, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -14,9 +14,15 @@ export default function CategoryProducts() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  const { currentCategory, categoryProducts, pagination, loading, error } = useSelector(
-    (state) => state.categories
-  );
+  // ✅ FIXED: Thêm fallback cho trường hợp state undefined
+  const categoryState = useSelector((state) => state.category) || {};
+  const { 
+    currentCategory = null, 
+    categoryProducts = [], 
+    pagination = null, 
+    loading = false, 
+    error = null 
+  } = categoryState;
   
   const [page, setPage] = useState(1);
   const [allProducts, setAllProducts] = useState([]);
