@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Spinner, Alert, Pagination, Form } from 'react-bootstrap';
+// frontend/src/pages/Products.jsx - WITH LAZY LOADING
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Container, Row, Col, Spinner, Alert, Form } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -10,70 +11,57 @@ import './css/Products.css';
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [sortBy, setSortBy] = useState('newest');
-  const productsPerPage = 16;
+  const limit = 16;
 
+  const observer = useRef();
+  const lastProductRef = useCallback((node) => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) {
+        console.log('📜 Loading more products...');
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
+
+  // Reset when sort changes
   useEffect(() => {
-    const page = parseInt(searchParams.get('page')) || 1;
     const sort = searchParams.get('sort') || 'newest';
-    setCurrentPage(page);
-    setSortBy(sort);
-    fetchProducts(page, sort);
+    if (sort !== sortBy) {
+      setSortBy(sort);
+      setProducts([]);
+      setPage(1);
+      setHasMore(true);
+    }
   }, [searchParams]);
 
-  const fetchProducts = async (page, sort) => {
+  // Fetch products when page or sort changes
+  useEffect(() => {
+    fetchProducts();
+  }, [page, sortBy]);
+
+  const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      // ✅ Lấy tất cả sản phẩm
-      const response = await productApi.getAll();
-      let allProducts = response.data.products || [];
+      const response = await productApi.getPaginated(page, limit, sortBy);
+      const newProducts = response.data.products || [];
+      const pagination = response.data.pagination;
 
-      // ✅ Sort products theo tiêu chí
-      switch (sort) {
-        case 'newest':
-          allProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          break;
-        case 'price-asc':
-          allProducts.sort((a, b) => (a.finalPrice || a.price) - (b.finalPrice || b.price));
-          break;
-        case 'price-desc':
-          allProducts.sort((a, b) => (b.finalPrice || b.price) - (a.finalPrice || a.price));
-          break;
-        case 'best-selling':
-          allProducts.sort((a, b) => (b.sold || 0) - (a.sold || 0));
-          break;
-        case 'discount':
-          allProducts.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-          break;
-        case 'name-asc':
-          allProducts.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'name-desc':
-          allProducts.sort((a, b) => b.name.localeCompare(a.name));
-          break;
-        default:
-          break;
-      }
-
-      // ✅ Client-side pagination
-      const totalItems = allProducts.length;
-      const totalPagesCalc = Math.ceil(totalItems / productsPerPage);
-      setTotalPages(totalPagesCalc);
-      setTotalProducts(totalItems);
-
-      const startIndex = (page - 1) * productsPerPage;
-      const endIndex = startIndex + productsPerPage;
-      const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-      setProducts(paginatedProducts);
+      // Append new products
+      setProducts(prev => [...prev, ...newProducts]);
+      setHasMore(pagination.hasNextPage);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching products:', err);
@@ -82,70 +70,9 @@ export default function Products() {
     }
   };
 
-  const handlePageChange = (pageNumber) => {
-    setSearchParams({ page: pageNumber, sort: sortBy });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleSortChange = (e) => {
     const newSort = e.target.value;
-    setSortBy(newSort);
-    setSearchParams({ page: 1, sort: newSort });
-  };
-
-  const renderPagination = () => {
-    const items = [];
-    const maxVisiblePages = 5;
-    
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    // First page button
-    if (startPage > 1) {
-      items.push(
-        <Pagination.First key="first" onClick={() => handlePageChange(1)} />
-      );
-    }
-
-    // Previous button
-    if (currentPage > 1) {
-      items.push(
-        <Pagination.Prev key="prev" onClick={() => handlePageChange(currentPage - 1)} />
-      );
-    }
-
-    // Page numbers
-    for (let page = startPage; page <= endPage; page++) {
-      items.push(
-        <Pagination.Item
-          key={page}
-          active={page === currentPage}
-          onClick={() => handlePageChange(page)}
-        >
-          {page}
-        </Pagination.Item>
-      );
-    }
-
-    // Next button
-    if (currentPage < totalPages) {
-      items.push(
-        <Pagination.Next key="next" onClick={() => handlePageChange(currentPage + 1)} />
-      );
-    }
-
-    // Last page button
-    if (endPage < totalPages) {
-      items.push(
-        <Pagination.Last key="last" onClick={() => handlePageChange(totalPages)} />
-      );
-    }
-
-    return items;
+    setSearchParams({ sort: newSort });
   };
 
   return (
@@ -168,7 +95,7 @@ export default function Products() {
             <Col md={8}>
               <div className="d-flex align-items-center">
                 <span className="text-muted me-3">
-                  Hiển thị {products.length > 0 ? ((currentPage - 1) * productsPerPage + 1) : 0} - {Math.min(currentPage * productsPerPage, totalProducts)} / {totalProducts} sản phẩm
+                  Hiển thị {products.length} sản phẩm
                 </span>
               </div>
             </Col>
@@ -190,14 +117,6 @@ export default function Products() {
           </Row>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-5">
-            <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
-            <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
-          </div>
-        )}
-
         {/* Error State */}
         {error && (
           <Alert variant="danger" className="mb-4">
@@ -207,29 +126,47 @@ export default function Products() {
         )}
 
         {/* Products Grid */}
-        {!loading && !error && products.length > 0 && (
-          <>
-            <Row className="g-3 mb-4">
-              {products.map((product) => (
+        {products.length > 0 && (
+          <Row className="g-3 mb-4">
+            {products.map((product, index) => {
+              // Attach ref to last product for infinite scroll
+              if (index === products.length - 1) {
+                return (
+                  <Col key={product._id} xs={6} sm={6} md={4} lg={3} ref={lastProductRef}>
+                    <ProductCard product={product} />
+                  </Col>
+                );
+              }
+              
+              return (
                 <Col key={product._id} xs={6} sm={6} md={4} lg={3}>
                   <ProductCard product={product} />
                 </Col>
-              ))}
-            </Row>
+              );
+            })}
+          </Row>
+        )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="d-flex justify-content-center mt-5">
-                <Pagination>
-                  {renderPagination()}
-                </Pagination>
-              </div>
-            )}
-          </>
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
+            <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
+          </div>
+        )}
+
+        {/* No More Products */}
+        {!loading && !hasMore && products.length > 0 && (
+          <div className="text-center py-4">
+            <p className="text-muted">
+              <i className="bi bi-check-circle me-2"></i>
+              Đã hiển thị tất cả sản phẩm
+            </p>
+          </div>
         )}
 
         {/* Empty State */}
-        {!loading && !error && products.length === 0 && (
+        {!loading && products.length === 0 && (
           <div className="empty-state text-center py-5">
             <i className="bi bi-inbox display-1 text-muted"></i>
             <h3 className="mt-4">Không có sản phẩm nào</h3>

@@ -2,6 +2,7 @@
 import express from 'express'
 import {
     getAllProducts,
+    getAllProductsWithPagination, // ✅ NEW
     getProductDetail,
     getBestSellingProducts,
     getNewestProducts,
@@ -15,8 +16,8 @@ import {
 const router = express.Router()
 
 // Public routes
-router.get('/', getAllProducts)
-//router.get('/random', getRandomProducts) // NEW: Random với phân trang
+router.get('/', getAllProducts) // Simple all products
+router.get('/paginated', getAllProductsWithPagination) // ✅ NEW: Lazy loading
 router.get('/best-selling', getBestSellingProducts)
 router.get('/newest', getNewestProducts)
 router.get('/most-viewed', getMostViewedProducts)

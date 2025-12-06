@@ -1,8 +1,15 @@
+// frontend/src/api/productApi.js - UPDATED
 import axiosClient from './axios'
 
 const productApi = {
     getAll: () => {
         return axiosClient.get('/products')
+    },
+    // ✅ NEW: Get products with pagination for lazy loading
+    getPaginated: (page = 1, limit = 16, sort = 'newest') => {
+        return axiosClient.get('/products/paginated', {
+            params: { page, limit, sort }
+        })
     },
     getDetail: (id) => {
         return axiosClient.get(`/products/${id}`)
