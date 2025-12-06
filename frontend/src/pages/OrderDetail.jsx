@@ -1,6 +1,6 @@
-// frontend/src/pages/OrderDetail.jsx
+// frontend/src/pages/OrderDetail.jsx - ENHANCED WITH TIMELINE
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, Modal, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import orderApi from '../api/orderApi';
@@ -16,6 +16,8 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     if (!token) {
@@ -38,15 +40,18 @@ export default function OrderDetail() {
   };
 
   const handleCancelOrder = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+    if (!cancelReason.trim()) {
+      alert('Vui lòng nhập lý do hủy đơn');
       return;
     }
 
     try {
       setCancelling(true);
-      await orderApi.cancelOrder(orderId, 'Khách hàng hủy đơn');
+      await orderApi.cancelOrder(orderId, cancelReason);
       await loadOrderDetail();
-      alert('Đã hủy đơn hàng thành công');
+      setShowCancelModal(false);
+      setCancelReason('');
+      alert('Đã gửi yêu cầu hủy đơn thành công');
     } catch (err) {
       alert(err.response?.data?.message || 'Lỗi khi hủy đơn hàng');
     } finally {
@@ -56,11 +61,13 @@ export default function OrderDetail() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      pending: { bg: 'warning', text: 'Chờ xử lý', icon: 'bi-clock-history' },
-      paid: { bg: 'info', text: 'Đã thanh toán', icon: 'bi-credit-card' },
-      shipping: { bg: 'primary', text: 'Đang giao', icon: 'bi-truck' },
-      completed: { bg: 'success', text: 'Hoàn thành', icon: 'bi-check-circle' },
-      cancelled: { bg: 'danger', text: 'Đã hủy', icon: 'bi-x-circle' }
+      new: { bg: 'info', text: 'Đơn hàng mới', icon: 'bi-clock-history' },
+      confirmed: { bg: 'primary', text: 'Đã xác nhận', icon: 'bi-check-circle' },
+      preparing: { bg: 'warning', text: 'Đang chuẩn bị', icon: 'bi-box-seam' },
+      shipping: { bg: 'info', text: 'Đang giao', icon: 'bi-truck' },
+      completed: { bg: 'success', text: 'Hoàn thành', icon: 'bi-check-circle-fill' },
+      cancelled: { bg: 'danger', text: 'Đã hủy', icon: 'bi-x-circle' },
+      cancel_requested: { bg: 'secondary', text: 'Yêu cầu hủy', icon: 'bi-exclamation-triangle' }
     };
     const statusInfo = statusMap[status] || { bg: 'secondary', text: status, icon: 'bi-question-circle' };
     return (
@@ -69,6 +76,19 @@ export default function OrderDetail() {
         {statusInfo.text}
       </Badge>
     );
+  };
+
+  const getTimeRemaining = () => {
+    if (!order || !order.cancellationInfo?.cancelDeadline) return null;
+    
+    const deadline = new Date(order.cancellationInfo.cancelDeadline);
+    const now = new Date();
+    const diff = deadline - now;
+    
+    if (diff <= 0) return null;
+    
+    const minutes = Math.floor(diff / 1000 / 60);
+    return `${minutes} phút`;
   };
 
   if (loading) {
@@ -103,6 +123,10 @@ export default function OrderDetail() {
     );
   }
 
+  const timeRemaining = getTimeRemaining();
+  const canCancel = order.status === 'new' || order.status === 'confirmed' || order.status === 'preparing';
+  const canDirectCancel = (order.status === 'new' || order.status === 'confirmed') && timeRemaining;
+
   return (
     <>
       <Header />
@@ -132,24 +156,105 @@ export default function OrderDetail() {
                 {getStatusBadge(order.status)}
               </Card.Header>
               <Card.Body>
+                {/* Enhanced Timeline */}
                 <div className="order-timeline">
                   <div className={`timeline-item ${order.status !== 'cancelled' ? 'active' : ''}`}>
-                    <i className="bi bi-check-circle"></i>
-                    <div>Đơn hàng đã đặt</div>
+                    <div className="timeline-marker">
+                      <i className="bi bi-check-circle"></i>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-title">Đơn hàng đã đặt</div>
+                      {order.createdAt && (
+                        <div className="timeline-time">
+                          {new Date(order.createdAt).toLocaleString('vi-VN')}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className={`timeline-item ${['paid', 'shipping', 'completed'].includes(order.status) ? 'active' : ''}`}>
-                    <i className="bi bi-credit-card"></i>
-                    <div>Đã xác nhận</div>
+
+                  <div className={`timeline-item ${['confirmed', 'preparing', 'shipping', 'completed'].includes(order.status) ? 'active' : ''}`}>
+                    <div className="timeline-marker">
+                      <i className="bi bi-check-circle"></i>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-title">Đã xác nhận</div>
+                      {order.confirmedAt && (
+                        <div className="timeline-time">
+                          {new Date(order.confirmedAt).toLocaleString('vi-VN')}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  <div className={`timeline-item ${['preparing', 'shipping', 'completed'].includes(order.status) ? 'active' : ''}`}>
+                    <div className="timeline-marker">
+                      <i className="bi bi-box-seam"></i>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-title">Đang chuẩn bị hàng</div>
+                      {order.preparingAt && (
+                        <div className="timeline-time">
+                          {new Date(order.preparingAt).toLocaleString('vi-VN')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className={`timeline-item ${['shipping', 'completed'].includes(order.status) ? 'active' : ''}`}>
-                    <i className="bi bi-truck"></i>
-                    <div>Đang giao hàng</div>
+                    <div className="timeline-marker">
+                      <i className="bi bi-truck"></i>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-title">Đang giao hàng</div>
+                      {order.shippingAt && (
+                        <div className="timeline-time">
+                          {new Date(order.shippingAt).toLocaleString('vi-VN')}
+                        </div>
+                      )}
+                    </div>
                   </div>
+
                   <div className={`timeline-item ${order.status === 'completed' ? 'active' : ''}`}>
-                    <i className="bi bi-box-seam"></i>
-                    <div>Đã giao hàng</div>
+                    <div className="timeline-marker">
+                      <i className="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div className="timeline-content">
+                      <div className="timeline-title">Đã giao hàng</div>
+                      {order.completedAt && (
+                        <div className="timeline-time">
+                          {new Date(order.completedAt).toLocaleString('vi-VN')}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Cancel request info */}
+                {order.status === 'cancel_requested' && (
+                  <Alert variant="warning" className="mt-3">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Yêu cầu hủy đơn đang được xem xét</strong>
+                    <div className="mt-2">
+                      Lý do: {order.cancelReason}
+                    </div>
+                  </Alert>
+                )}
+
+                {/* Cancelled info */}
+                {order.status === 'cancelled' && order.cancelReason && (
+                  <Alert variant="danger" className="mt-3">
+                    <i className="bi bi-x-circle me-2"></i>
+                    <strong>Đơn hàng đã bị hủy</strong>
+                    <div className="mt-2">
+                      Lý do: {order.cancelReason}
+                    </div>
+                    {order.cancelledAt && (
+                      <div className="text-muted small mt-1">
+                        Hủy lúc: {new Date(order.cancelledAt).toLocaleString('vi-VN')}
+                      </div>
+                    )}
+                  </Alert>
+                )}
               </Card.Body>
             </Card>
 
@@ -274,44 +379,92 @@ export default function OrderDetail() {
                   <strong>Phương thức:</strong> {order.paymentMethod || 'COD'}
                 </div>
 
-                <div className="alert alert-warning mb-3">
-                  <i className="bi bi-info-circle me-2"></i>
-                  <strong>Trạng thái:</strong>{' '}
-                  {order.paymentStatus === 'unpaid' ? 'Chưa thanh toán' : 'Đã thanh toán'}
-                </div>
+                {/* Time remaining for cancel */}
+                {canDirectCancel && timeRemaining && (
+                  <Alert variant="warning" className="mb-3">
+                    <i className="bi bi-clock me-2"></i>
+                    <small>Còn <strong>{timeRemaining}</strong> để hủy đơn miễn phí</small>
+                  </Alert>
+                )}
 
-                {order.status === 'pending' && (
+                {/* Cancel button */}
+                {canCancel && order.status !== 'cancel_requested' && (
                   <Button
                     variant="danger"
                     className="w-100"
-                    onClick={handleCancelOrder}
+                    onClick={() => setShowCancelModal(true)}
                     disabled={cancelling}
                   >
-                    {cancelling ? (
-                      <>
-                        <Spinner animation="border" size="sm" className="me-2" />
-                        Đang hủy...
-                      </>
-                    ) : (
+                    {canDirectCancel ? (
                       <>
                         <i className="bi bi-x-circle me-2"></i>
                         Hủy đơn hàng
                       </>
+                    ) : (
+                      <>
+                        <i className="bi bi-exclamation-triangle me-2"></i>
+                        Gửi yêu cầu hủy
+                      </>
                     )}
                   </Button>
-                )}
-
-                {order.status === 'cancelled' && order.cancelReason && (
-                  <div className="alert alert-danger">
-                    <i className="bi bi-x-circle me-2"></i>
-                    <strong>Lý do hủy:</strong> {order.cancelReason}
-                  </div>
                 )}
               </Card.Body>
             </Card>
           </Col>
         </Row>
       </Container>
+
+      {/* Cancel Modal */}
+      <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {canDirectCancel ? 'Xác nhận hủy đơn hàng' : 'Gửi yêu cầu hủy đơn'}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Lý do hủy <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Vui lòng nhập lý do hủy đơn..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+          </Form.Group>
+          {!canDirectCancel && (
+            <Alert variant="info" className="mt-3 mb-0">
+              <i className="bi bi-info-circle me-2"></i>
+              <small>
+                Đơn hàng đang được chuẩn bị. Yêu cầu hủy sẽ được shop xem xét và phản hồi sớm nhất.
+              </small>
+            </Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCancelModal(false)}>
+            Đóng
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleCancelOrder}
+            disabled={cancelling || !cancelReason.trim()}
+          >
+            {cancelling ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check me-2"></i>
+                Xác nhận
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <Footer />
     </>
   );

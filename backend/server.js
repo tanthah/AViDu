@@ -1,4 +1,4 @@
-// backend/server.js - FIXED WITH ADDRESS ROUTES
+// backend/server.js - WITH CRON JOBS
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
@@ -11,7 +11,7 @@ import editUserRoutes from './src/routes/editUserRoutes.js'
 import productRoutes from './src/routes/productRoutes.js'
 import cartRoutes from './src/routes/cartRoutes.js'
 import orderRoutes from './src/routes/orderRoutes.js'
-import addressRoutes from './src/routes/addressRoutes.js' // ✅ THÊM
+import addressRoutes from './src/routes/addressRoutes.js'
 import categoryRoutes from "./src/routes/categoryRoutes.js";
 
 // Import security middlewares
@@ -20,6 +20,9 @@ import {
   checkContentType
 } from './src/middleware/security.js'
 import { generalLimiter } from './src/middleware/rateLimiter.js'
+
+// ✅ Import cron jobs
+import { startOrderAutoConfirm } from './src/utils/orderCronJobs.js'
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -47,6 +50,9 @@ app.use(checkContentType)
 // Database Connection
 connectDB()
 
+// ✅ Start cron jobs after DB connection
+startOrderAutoConfirm()
+
 // Static Files
 app.use('/uploads', express.static('uploads'))
 
@@ -57,7 +63,7 @@ app.use('/api/user', editUserRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
-app.use('/api/addresses', addressRoutes) // ✅ THÊM ADDRESS ROUTES
+app.use('/api/addresses', addressRoutes)
 app.use("/api/category", categoryRoutes);
 
 // Health check
@@ -123,6 +129,7 @@ app.listen(PORT, () => {
   console.log(`🔒 Security middlewares đã được kích hoạt`)
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
   console.log(`🌐 CORS enabled for: http://localhost:5173`)
+  console.log(`⏰ Cron jobs đã được kích hoạt`)
 })
 
 export default app

@@ -1,6 +1,6 @@
-// frontend/src/pages/Orders.jsx
+// frontend/src/pages/Orders.jsx - ENHANCED WITH FILTERS
 import React, { useEffect, useState } from 'react';
-import { Container, Card, Badge, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Card, Badge, Button, Spinner, Alert, Nav } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import orderApi from '../api/orderApi';
@@ -12,8 +12,10 @@ export default function Orders() {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     if (!token) {
@@ -28,6 +30,7 @@ export default function Orders() {
       setLoading(true);
       const response = await orderApi.getUserOrders();
       setOrders(response.data.orders);
+      setFilteredOrders(response.data.orders);
     } catch (err) {
       setError(err.response?.data?.message || 'Lỗi khi tải đơn hàng');
     } finally {
@@ -35,26 +38,37 @@ export default function Orders() {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { bg: 'warning', text: 'Chờ xử lý' },
-      paid: { bg: 'info', text: 'Đã thanh toán' },
-      shipping: { bg: 'primary', text: 'Đang giao' },
-      completed: { bg: 'success', text: 'Hoàn thành' },
-      cancelled: { bg: 'danger', text: 'Đã hủy' }
-    };
-    const statusInfo = statusMap[status] || { bg: 'secondary', text: status };
-    return <Badge bg={statusInfo.bg}>{statusInfo.text}</Badge>;
+  const filterOrders = (status) => {
+    setActiveFilter(status);
+    if (status === 'all') {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(order => order.status === status));
+    }
   };
 
-  const getPaymentStatusBadge = (status) => {
+  const getStatusBadge = (status) => {
     const statusMap = {
-      unpaid: { bg: 'warning', text: 'Chưa thanh toán' },
-      paid: { bg: 'success', text: 'Đã thanh toán' },
-      refunded: { bg: 'secondary', text: 'Đã hoàn tiền' }
+      new: { bg: 'info', text: 'Đơn hàng mới', icon: 'bi-clock-history' },
+      confirmed: { bg: 'primary', text: 'Đã xác nhận', icon: 'bi-check-circle' },
+      preparing: { bg: 'warning', text: 'Đang chuẩn bị', icon: 'bi-box-seam' },
+      shipping: { bg: 'info', text: 'Đang giao', icon: 'bi-truck' },
+      completed: { bg: 'success', text: 'Hoàn thành', icon: 'bi-check-circle-fill' },
+      cancelled: { bg: 'danger', text: 'Đã hủy', icon: 'bi-x-circle' },
+      cancel_requested: { bg: 'secondary', text: 'Yêu cầu hủy', icon: 'bi-exclamation-triangle' }
     };
-    const statusInfo = statusMap[status] || { bg: 'secondary', text: status };
-    return <Badge bg={statusInfo.bg}>{statusInfo.text}</Badge>;
+    const statusInfo = statusMap[status] || { bg: 'secondary', text: status, icon: 'bi-question-circle' };
+    return (
+      <Badge bg={statusInfo.bg} className="status-badge">
+        <i className={`bi ${statusInfo.icon} me-1`}></i>
+        {statusInfo.text}
+      </Badge>
+    );
+  };
+
+  const getStatusCount = (status) => {
+    if (status === 'all') return orders.length;
+    return orders.filter(order => order.status === status).length;
   };
 
   if (loading) {
@@ -86,10 +100,74 @@ export default function Orders() {
           </Alert>
         )}
 
-        {orders.length === 0 ? (
+        {/* Filter Tabs */}
+        <Nav variant="pills" className="mb-4 order-filters">
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'all'} 
+              onClick={() => filterOrders('all')}
+            >
+              Tất cả ({getStatusCount('all')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'new'} 
+              onClick={() => filterOrders('new')}
+            >
+              Đơn mới ({getStatusCount('new')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'confirmed'} 
+              onClick={() => filterOrders('confirmed')}
+            >
+              Đã xác nhận ({getStatusCount('confirmed')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'preparing'} 
+              onClick={() => filterOrders('preparing')}
+            >
+              Chuẩn bị hàng ({getStatusCount('preparing')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'shipping'} 
+              onClick={() => filterOrders('shipping')}
+            >
+              Đang giao ({getStatusCount('shipping')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'completed'} 
+              onClick={() => filterOrders('completed')}
+            >
+              Hoàn thành ({getStatusCount('completed')})
+            </Nav.Link>
+          </Nav.Item>
+          <Nav.Item>
+            <Nav.Link 
+              active={activeFilter === 'cancelled'} 
+              onClick={() => filterOrders('cancelled')}
+            >
+              Đã hủy ({getStatusCount('cancelled')})
+            </Nav.Link>
+          </Nav.Item>
+        </Nav>
+
+        {filteredOrders.length === 0 ? (
           <div className="text-center py-5">
             <i className="bi bi-inbox" style={{ fontSize: '5rem', color: '#ccc' }}></i>
-            <h4 className="mt-3">Bạn chưa có đơn hàng nào</h4>
+            <h4 className="mt-3">
+              {activeFilter === 'all' 
+                ? 'Bạn chưa có đơn hàng nào' 
+                : `Không có đơn hàng nào ở trạng thái này`}
+            </h4>
             <Button variant="primary" onClick={() => navigate('/products')} className="mt-3">
               <i className="bi bi-arrow-left me-2"></i>
               Tiếp tục mua sắm
@@ -97,18 +175,17 @@ export default function Orders() {
           </div>
         ) : (
           <>
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <Card key={order._id} className="mb-3 order-card">
                 <Card.Header className="d-flex justify-content-between align-items-center">
                   <div>
                     <strong>Mã đơn: {order.orderCode}</strong>
                     <span className="text-muted ms-3">
-                      {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                      {new Date(order.createdAt).toLocaleString('vi-VN')}
                     </span>
                   </div>
                   <div>
                     {getStatusBadge(order.status)}
-                    <span className="ms-2">{getPaymentStatusBadge(order.paymentStatus)}</span>
                   </div>
                 </Card.Header>
                 <Card.Body>
@@ -118,7 +195,14 @@ export default function Orders() {
                         <img 
                           src={item.productId?.images?.[0] || 'https://via.placeholder.com/60'} 
                           alt={item.productId?.name || 'Product'}
-                          style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }}
+                          style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            objectFit: 'cover', 
+                            borderRadius: '8px',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => item.productId && navigate(`/product/${item.productId._id}`)}
                         />
                         <div className="flex-grow-1 ms-3">
                           <div>{item.productId?.name || 'Sản phẩm đã bị xóa'}</div>
@@ -135,6 +219,14 @@ export default function Orders() {
                     )}
                   </div>
 
+                  {/* Status message */}
+                  {order.status === 'cancel_requested' && (
+                    <Alert variant="warning" className="mb-3">
+                      <i className="bi bi-exclamation-triangle me-2"></i>
+                      Yêu cầu hủy đơn đang được xem xét
+                    </Alert>
+                  )}
+
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
                       <strong>Tổng tiền:</strong>{' '}
@@ -147,6 +239,7 @@ export default function Orders() {
                       size="sm"
                       onClick={() => navigate(`/orders/${order._id}`)}
                     >
+                      <i className="bi bi-eye me-1"></i>
                       Xem chi tiết
                     </Button>
                   </div>

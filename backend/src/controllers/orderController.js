@@ -1,28 +1,31 @@
-// backend/src/controllers/orderController.js
+// backend/src/controllers/orderController.js - ENHANCED
 import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 import Address from '../models/Address.js';
 
-// TẠO ĐỘN HÀNG COD
+// ✅ CREATE ORDER - Updated với status history
 export const createOrder = async (req, res) => {
     try {
         const userId = req.user.id;
         const { addressId, notes, shippingFee = 30000 } = req.body;
 
-        // Kiểm tra địa chỉ
         const address = await Address.findOne({ _id: addressId, userId });
         if (!address) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy địa chỉ giao hàng' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy địa chỉ giao hàng' 
+            });
         }
 
-        // Lấy giỏ hàng
         const cart = await Cart.findOne({ userId }).populate('items.productId');
         if (!cart || cart.items.length === 0) {
-            return res.status(400).json({ success: false, message: 'Giỏ hàng trống' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Giỏ hàng trống' 
+            });
         }
 
-        // Kiểm tra tồn kho và chuẩn bị items
         const orderItems = [];
         for (const item of cart.items) {
             const product = await Product.findById(item.productId._id);
@@ -41,7 +44,6 @@ export const createOrder = async (req, res) => {
                 });
             }
 
-            // Trừ tồn kho
             product.stock -= item.quantity;
             product.sold += item.quantity;
             await product.save();
@@ -53,60 +55,65 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        // Tạo mã đơn hàng
         const orderCode = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`;
-
-        // Tính tổng tiền
         const totalPrice = cart.totalPrice + shippingFee;
 
-        // Tạo đơn hàng
         const order = await Order.create({
             orderCode,
             userId,
             items: orderItems,
             totalPrice,
             shippingFee,
-            status: 'pending',
+            status: 'new',
             paymentStatus: 'unpaid',
             paymentMethod: 'COD',
             addressId,
             notes
         });
 
-        // Xóa giỏ hàng
         cart.items = [];
         cart.totalQuantity = 0;
         cart.totalPrice = 0;
         await cart.save();
 
-        // Populate thông tin đơn hàng
         await order.populate(['items.productId', 'addressId']);
 
         res.status(201).json({ 
             success: true, 
             order,
-            message: 'Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng.' 
+            message: 'Đặt hàng thành công! Đơn hàng sẽ được xác nhận trong 30 phút.' 
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// LẤY TẤT CẢ ĐƠN HÀNG CỦA USER
+// ✅ GET USER ORDERS - With status filtering
 export const getUserOrders = async (req, res) => {
     try {
         const userId = req.user.id;
-        const orders = await Order.find({ userId })
+        const { status } = req.query;
+        
+        const query = { userId };
+        if (status) {
+            query.status = status;
+        }
+        
+        const orders = await Order.find(query)
             .populate(['items.productId', 'addressId'])
             .sort({ createdAt: -1 });
 
-        res.json({ success: true, orders });
+        res.json({ 
+            success: true, 
+            orders,
+            count: orders.length
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// LẤY CHI TIẾT ĐƠN HÀNG
+// ✅ GET ORDER DETAIL - With full status history
 export const getOrderDetail = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -116,16 +123,24 @@ export const getOrderDetail = async (req, res) => {
             .populate(['items.productId', 'addressId']);
 
         if (!order) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy đơn hàng' 
+            });
         }
 
-        res.json({ success: true, order });
+        res.json({ 
+            success: true, 
+            order,
+            canDirectCancel: order.canDirectCancel,
+            canRequestCancel: order.canRequestCancel
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// HỦY ĐƠN HÀNG
+// ✅ CANCEL ORDER - Enhanced với logic 30 phút
 export const cancelOrder = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -134,31 +149,218 @@ export const cancelOrder = async (req, res) => {
 
         const order = await Order.findOne({ _id: orderId, userId });
         if (!order) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
-        }
-
-        if (order.status !== 'pending') {
-            return res.status(400).json({ 
+            return res.status(404).json({ 
                 success: false, 
-                message: 'Chỉ có thể hủy đơn hàng đang chờ xử lý' 
+                message: 'Không tìm thấy đơn hàng' 
             });
         }
 
-        // Hoàn lại tồn kho
-        for (const item of order.items) {
-            const product = await Product.findById(item.productId);
-            if (product) {
-                product.stock += item.quantity;
-                product.sold -= item.quantity;
-                await product.save();
-            }
+        // Check if already cancelled or completed
+        if (order.status === 'cancelled') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Đơn hàng đã được hủy trước đó' 
+            });
         }
 
-        order.status = 'cancelled';
-        order.cancelReason = cancelReason || 'Khách hàng hủy đơn';
-        await order.save();
+        if (order.status === 'completed') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Không thể hủy đơn hàng đã hoàn thành' 
+            });
+        }
 
-        res.json({ success: true, order, message: 'Đã hủy đơn hàng thành công' });
+        // Check if can directly cancel (new or confirmed within 30 minutes)
+        if (order.canDirectCancel) {
+            // Direct cancellation - Restore stock
+            for (const item of order.items) {
+                const product = await Product.findById(item.productId);
+                if (product) {
+                    product.stock += item.quantity;
+                    product.sold -= item.quantity;
+                    await product.save();
+                }
+            }
+
+            await order.updateStatus(
+                'cancelled', 
+                cancelReason || 'Khách hàng hủy đơn trong 30 phút', 
+                'customer'
+            );
+            
+            order.cancelReason = cancelReason || 'Khách hàng hủy đơn';
+
+            return res.json({ 
+                success: true, 
+                order, 
+                message: 'Đã hủy đơn hàng thành công' 
+            });
+        }
+
+        // If preparing - Create cancel request
+        if (order.status === 'preparing') {
+            await order.updateStatus(
+                'cancel_requested', 
+                cancelReason || 'Khách hàng yêu cầu hủy đơn', 
+                'customer'
+            );
+            
+            order.cancelReason = cancelReason || 'Khách hàng yêu cầu hủy đơn';
+            order.cancellationInfo.requestedBy = userId;
+            await order.save();
+
+            return res.json({ 
+                success: true, 
+                order,
+                message: 'Đã gửi yêu cầu hủy đơn. Shop sẽ xem xét và phản hồi sớm nhất.' 
+            });
+        }
+
+        // Cannot cancel
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Không thể hủy đơn hàng ở trạng thái hiện tại' 
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ✅ GET ORDER STATUS HISTORY
+export const getOrderStatusHistory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { orderId } = req.params;
+
+        const order = await Order.findOne({ _id: orderId, userId });
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy đơn hàng' 
+            });
+        }
+
+        res.json({ 
+            success: true, 
+            statusHistory: order.statusHistory,
+            currentStatus: order.status
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ✅ ADMIN: Update order status
+export const updateOrderStatus = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status, note } = req.body;
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy đơn hàng' 
+            });
+        }
+
+        await order.updateStatus(status, note, 'admin');
+
+        res.json({ 
+            success: true, 
+            order,
+            message: 'Cập nhật trạng thái đơn hàng thành công' 
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ✅ ADMIN: Approve/Reject cancel request
+export const handleCancelRequest = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { action, rejectionReason } = req.body; // action: 'approve' | 'reject'
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy đơn hàng' 
+            });
+        }
+
+        if (order.status !== 'cancel_requested') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Đơn hàng không có yêu cầu hủy' 
+            });
+        }
+
+        if (action === 'approve') {
+            // Restore stock
+            for (const item of order.items) {
+                const product = await Product.findById(item.productId);
+                if (product) {
+                    product.stock += item.quantity;
+                    product.sold -= item.quantity;
+                    await product.save();
+                }
+            }
+
+            await order.updateStatus('cancelled', 'Yêu cầu hủy được chấp thuận', 'admin');
+            order.cancellationInfo.approvedBy = req.user.id;
+
+            return res.json({ 
+                success: true, 
+                order,
+                message: 'Đã chấp thuận yêu cầu hủy đơn' 
+            });
+        }
+
+        if (action === 'reject') {
+            await order.updateStatus(
+                'preparing', 
+                `Từ chối yêu cầu hủy: ${rejectionReason}`, 
+                'admin'
+            );
+            order.cancellationInfo.rejectionReason = rejectionReason;
+
+            return res.json({ 
+                success: true, 
+                order,
+                message: 'Đã từ chối yêu cầu hủy đơn' 
+            });
+        }
+
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Action không hợp lệ' 
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ✅ GET ORDER STATISTICS
+export const getOrderStatistics = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const stats = await Order.aggregate([
+            { $match: { userId: mongoose.Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: '$status',
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: '$totalPrice' }
+                }
+            }
+        ]);
+
+        res.json({ success: true, stats });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
