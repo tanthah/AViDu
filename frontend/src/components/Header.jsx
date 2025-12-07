@@ -181,6 +181,15 @@ export default function Header() {
                     <i className="bi bi-box-seam me-2"></i>Đơn hàng
                   </NavDropdown.Item>
                   <NavDropdown.Divider />
+                  <NavDropdown.Item as={Link} to="/reviews">
+                    <i className="bi bi-star me-2"></i>Đánh giá
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/wishlist">
+                    <i className="bi bi-heart me-2"></i>Yêu thích
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/loyalty">
+                    <i className="bi bi-coin me-2"></i>Điểm tích lũy
+                  </NavDropdown.Item>
                   <NavDropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất
                   </NavDropdown.Item>

@@ -14,6 +14,8 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'swiper/css/thumbs'
 import './css/ProductDetail.css'
+import { addToWishlist } from '../redux/wishlistSlice';
+import viewedProductApi from '../api/viewedProductApi';
 
 export default function ProductDetail() {
     const { id } = useParams()
@@ -74,6 +76,23 @@ export default function ProductDetail() {
             alert(err || 'Không thể thêm vào giỏ hàng')
         }
     }
+
+    // Track view when product loads:
+    useEffect(() => {
+    if (product && token) {
+        viewedProductApi.trackView(product._id);
+    }
+    }, [product, token]);
+
+    // Add wishlist button:
+    const handleAddToWishlist = async () => {
+    try {
+        await dispatch(addToWishlist(product._id)).unwrap();
+        alert('Đã thêm vào yêu thích');
+    } catch (err) {
+        alert(err);
+    }
+    };
 
     // ✅ FIXED: Mua ngay - Chuyển trực tiếp sang checkout với query param
     const handleBuyNow = async () => {

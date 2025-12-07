@@ -17,6 +17,9 @@ import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
 import Orders from './pages/Orders.jsx'
 import OrderDetail from './pages/OrderDetail.jsx'
+import Reviews from './pages/Reviews'
+import Wishlist from './pages/Wishlist'
+import LoyaltyPoints from './pages/LoyaltyPoints'
 
 function App() {
   const token = useSelector((s) => s.auth.token)
@@ -64,6 +67,11 @@ function App() {
         path="/edit-profile" 
         element={token ? <EditProfile /> : <Navigate to="/login" replace />} 
       />
+
+      {/* Protected Routes - Reviews, Wishlist, Loyalty Points */}
+      <Route path="/reviews" element={token ? <Reviews /> : <Navigate to="/login" />} />
+      <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" />} />
+      <Route path="/loyalty" element={token ? <LoyaltyPoints /> : <Navigate to="/login" />} />
 
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
