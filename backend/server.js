@@ -1,4 +1,4 @@
-// backend/server.js - WITH CRON JOBS
+// backend/server.js - UPDATED WITH NEW ROUTES
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
@@ -12,7 +12,14 @@ import productRoutes from './src/routes/productRoutes.js'
 import cartRoutes from './src/routes/cartRoutes.js'
 import orderRoutes from './src/routes/orderRoutes.js'
 import addressRoutes from './src/routes/addressRoutes.js'
-import categoryRoutes from "./src/routes/categoryRoutes.js";
+import categoryRoutes from "./src/routes/categoryRoutes.js"
+
+// ✅ NEW ROUTES
+import reviewRoutes from './src/routes/reviewRoutes.js'
+import wishlistRoutes from './src/routes/wishlistRoutes.js'
+import viewedProductRoutes from './src/routes/viewedProductRoutes.js'
+import loyaltyRoutes from './src/routes/loyaltyRoutes.js'
+import couponRoutes from './src/routes/couponRoutes.js'
 
 // Import security middlewares
 import {
@@ -21,7 +28,7 @@ import {
 } from './src/middleware/security.js'
 import { generalLimiter } from './src/middleware/rateLimiter.js'
 
-// ✅ Import cron jobs
+// Import cron jobs
 import { startOrderAutoConfirm } from './src/utils/orderCronJobs.js'
 
 const app = express()
@@ -50,7 +57,7 @@ app.use(checkContentType)
 // Database Connection
 connectDB()
 
-// ✅ Start cron jobs after DB connection
+// Start cron jobs
 startOrderAutoConfirm()
 
 // Static Files
@@ -64,7 +71,14 @@ app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/addresses', addressRoutes)
-app.use("/api/category", categoryRoutes);
+app.use("/api/category", categoryRoutes)
+
+// ✅ NEW ROUTES
+app.use('/api/reviews', reviewRoutes)
+app.use('/api/wishlist', wishlistRoutes)
+app.use('/api/viewed', viewedProductRoutes)
+app.use('/api/loyalty', loyaltyRoutes)
+app.use('/api/coupons', couponRoutes)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -130,6 +144,7 @@ app.listen(PORT, () => {
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`)
   console.log(`🌐 CORS enabled for: http://localhost:5173`)
   console.log(`⏰ Cron jobs đã được kích hoạt`)
+  console.log(`✅ New features: Reviews, Wishlist, Loyalty Points, Coupons`)
 })
 
 export default app
