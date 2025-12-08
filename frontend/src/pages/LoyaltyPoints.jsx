@@ -1,5 +1,15 @@
-// frontend/src/pages/LoyaltyPoints.jsx
-export function LoyaltyPoints() {
+// frontend/src/pages/LoyaltyPoints.jsx - COMPLETE
+import React, { useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchLoyaltyPoints, fetchPointsHistory } from '../redux/loyaltySlice';
+import { fetchUserCoupons } from '../redux/couponSlice';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import './css/LoyaltyPoints.css';
+
+export default function LoyaltyPoints() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { token } = useSelector((s) => s.auth);
@@ -16,12 +26,18 @@ export function LoyaltyPoints() {
     dispatch(fetchUserCoupons('active'));
   }, [dispatch, token, navigate]);
 
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    alert(`Đã sao chép mã: ${code}`);
+  };
+
   if (loading) {
     return (
       <>
         <Header />
         <Container className="py-5 text-center">
           <Spinner animation="border" />
+          <p className="mt-3">Đang tải...</p>
         </Container>
         <Footer />
       </>
@@ -90,7 +106,12 @@ export function LoyaltyPoints() {
                               HSD: {new Date(coupon.expiryDate).toLocaleDateString('vi-VN')}
                             </small>
                           </div>
-                          <Button variant="outline-primary" size="sm">
+                          <Button 
+                            variant="outline-primary" 
+                            size="sm"
+                            onClick={() => handleCopyCode(coupon.code)}
+                          >
+                            <i className="bi bi-clipboard me-1"></i>
                             Sao chép
                           </Button>
                         </div>

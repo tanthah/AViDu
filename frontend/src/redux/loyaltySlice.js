@@ -1,4 +1,6 @@
-// frontend/src/redux/loyaltySlice.js
+// frontend/src/redux/loyaltySlice.js - FIXED
+// ========================================
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import loyaltyApi from '../api/loyaltyApi';
 
 export const fetchLoyaltyPoints = createAsyncThunk(

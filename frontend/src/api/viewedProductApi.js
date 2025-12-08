@@ -1,4 +1,7 @@
-// frontend/src/api/viewedProductApi.js
+// frontend/src/api/viewedProductApi.js - FIXED
+// ========================================
+import axios from './axios';
+
 const viewedProductApi = {
     // Track product view
     trackView: (productId) => axios.post('/viewed/track', { productId }),

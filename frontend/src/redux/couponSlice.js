@@ -1,4 +1,6 @@
-// frontend/src/redux/couponSlice.js
+// frontend/src/redux/couponSlice.js - FIXED
+// ========================================
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import couponApi from '../api/couponApi';
 
 export const fetchUserCoupons = createAsyncThunk(

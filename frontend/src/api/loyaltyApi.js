@@ -1,4 +1,7 @@
-// frontend/src/api/loyaltyApi.js
+// frontend/src/api/loyaltyApi.js - FIXED
+// ========================================
+import axios from './axios';
+
 const loyaltyApi = {
     // Get loyalty points
     getLoyaltyPoints: () => axios.get('/loyalty'),

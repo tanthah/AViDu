@@ -1,4 +1,7 @@
-// frontend/src/api/wishlistApi.js
+// frontend/src/api/wishlistApi.js - FIXED
+// ========================================
+import axios from './axios';
+
 const wishlistApi = {
     // Get wishlist
     getWishlist: () => axios.get('/wishlist'),

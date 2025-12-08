@@ -1,4 +1,7 @@
-// frontend/src/api/couponApi.js
+// frontend/src/api/couponApi.js - FIXED
+// ========================================
+import axios from './axios';
+
 const couponApi = {
     // Get user coupons
     getUserCoupons: (status = 'active') => 
