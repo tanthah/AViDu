@@ -45,7 +45,7 @@ app.use(cors({
 
 // Security Middlewares
 app.use(hppProtection)
-app.use(generalLimiter)
+//app.use(generalLimiter)
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }))
@@ -64,8 +64,9 @@ startOrderAutoConfirm()
 app.use('/uploads', express.static('uploads'))
 
 // API Routes
-app.use('/api/auth', authRoutes)
-app.use('/api/register', registerRoutes)
+app.use('/api/auth', generalLimiter, authRoutes)
+app.use('/api/register', generalLimiter, registerRoutes)
+
 app.use('/api/user', editUserRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/cart', cartRoutes)
@@ -73,7 +74,6 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/addresses', addressRoutes)
 app.use("/api/category", categoryRoutes)
 
-// ✅ NEW ROUTES
 app.use('/api/reviews', reviewRoutes)
 app.use('/api/wishlist', wishlistRoutes)
 app.use('/api/viewed', viewedProductRoutes)
