@@ -1,0 +1,190 @@
+/* frontend/src/components/css/Header.css - FIXED Z-INDEX */
+.header-main {
+  position: sticky;
+  top: 0;
+  z-index: 1000; /* ✅ FIXED: Đảm bảo luôn cao nhất */
+}
+
+.top-bar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 3px 0;
+  font-size: 0.7rem;
+  position: relative;
+  z-index: 1001; /* ✅ Cao hơn main-navbar */
+}
+
+.main-navbar {
+  padding-top: 0.3rem !important;
+  padding-bottom: 0.3rem !important;
+  position: relative;
+  z-index: 1000;
+  background: white;
+}
+
+.brand-logo {
+  font-weight: bold !important;
+  font-size: 1.4rem !important;
+  color: rgb(144, 90, 191) !important;
+  display: flex;
+  align-items: center;
+  padding: 1.5rem  !important;
+  margin: 0.3rem !important;
+  width: auto !important;
+  max-width: 130px !important;
+  max-height: 50px !important;
+  background-color:#bee2f3 !important;
+}
+
+.brand-logo i {
+  font-size: 1.3rem !important;
+  margin-right: 0.2rem !important;
+}
+
+.brand-text {
+  font-size: 1.5rem !important;
+  white-space: nowrap !important;
+}
+
+.brand-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Category Navigation Inline */
+.category-nav-inline {
+  margin-left: 2rem;
+}
+
+.category-link {
+  padding: 0.4rem 0.8rem;
+  color: #495057;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.category-link:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+}
+
+.search-form {
+  display: flex;
+  margin: 0 0.5rem !important;
+  width: 100%;
+  max-width: 280px;
+}
+
+.search-input {
+  border-radius: 20px 0 0 20px !important;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.7rem !important;
+}
+
+.search-btn {
+  border-radius: 0 20px 20px 0 !important;
+  padding: 0.4rem 0.8rem;
+}
+
+/* Cart Link */
+.cart-link {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cart-link:hover {
+  transform: scale(1.1);
+}
+
+.cart-badge {
+  position: absolute;
+  top: 0;
+  left: 100% !important;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem !important;
+  z-index: 1;
+}
+
+/* User Dropdown */
+.user-dropdown .dropdown-toggle {
+  background: transparent !important;
+  border: none !important;
+  padding: 0.25rem 0.5rem !important;
+}
+
+.user-dropdown .dropdown-toggle:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+  border-radius: 8px;
+}
+
+.user-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.user-dropdown .dropdown-menu {
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  z-index: 1050; /* ✅ Cao hơn header */
+}
+
+.user-dropdown .dropdown-item {
+  padding: 0.6rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.user-dropdown .dropdown-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+/* Dropdown customization */
+#category-dropdown .dropdown-toggle,
+#user-dropdown .dropdown-toggle {
+  font-size: 0.9rem;
+}
+
+/* ✅ FIXED: Đảm bảo dropdown category không bị che */
+#category-dropdown .dropdown-menu {
+  z-index: 1050;
+}
+
+@media (max-width: 991px) {
+  .search-form {
+    max-width: 100%;
+    margin: 1rem 0;
+  }
+  
+  .top-bar {
+    font-size: 0.75rem;
+  }
+  
+  .top-bar > div > div:last-child {
+    display: none;
+  }
+
+  .category-nav-inline {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .main-navbar {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .cart-link {
+    margin-right: 1rem !important;
+  }
+
+  .user-dropdown .dropdown-toggle span {
+    font-size: 0.85rem;
+  }
+}
