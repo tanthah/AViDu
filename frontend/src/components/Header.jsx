@@ -36,7 +36,7 @@ export default function Header() {
   useEffect(() => {
     dispatch(fetchCategories());
     if (token) dispatch(fetchCart());
-  }, [token]); // <--- Không để dispatch vào dependency nữa
+  }, []); // <--- Không để dispatch vào dependency nữa
 
   /* ---------------------- HANDLERS ---------------------- */
   const handleLogout = useCallback(() => {

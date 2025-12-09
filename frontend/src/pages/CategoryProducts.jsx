@@ -70,7 +70,7 @@ export default function CategoryProducts() {
     };
 
     loadProducts();
-  }, [categoryId, page, dispatch]);
+  }, [categoryId, page]);
 
   return (
     <div className="category-products-page">

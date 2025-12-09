@@ -26,7 +26,7 @@ export default function Home() {
     dispatch(fetchBestSellers())
     dispatch(fetchMostViewed())
     dispatch(fetchTopDiscounts())
-  }, [dispatch, location.pathname])
+  }, [dispatch])
 
   const features = [
     {
