@@ -79,20 +79,22 @@ export default function ProductDetail() {
 
     // Track view when product loads:
     useEffect(() => {
-    if (product && token) {
-        viewedProductApi.trackView(product._id);
-    }
-    }, [product, token]);
+        if (currentProduct && token) {
+            viewedProductApi.trackView(currentProduct._id);
+        }
+    }, [currentProduct, token]);
+
 
     // Add wishlist button:
+    // ---------------------------
     const handleAddToWishlist = async () => {
-    try {
-        await dispatch(addToWishlist(product._id)).unwrap();
-        alert('Đã thêm vào yêu thích');
-    } catch (err) {
-        alert(err);
+        try {
+            await dispatch(addToWishlist(currentProduct._id)).unwrap()
+            alert('Đã thêm vào yêu thích')
+        } catch (err) {
+            alert(err)
+        }
     }
-    };
 
     // ✅ FIXED: Mua ngay - Chuyển trực tiếp sang checkout với query param
     const handleBuyNow = async () => {
@@ -337,6 +339,15 @@ export default function ProductDetail() {
                                 >
                                     <i className="bi bi-lightning-fill me-2"></i>
                                     Mua ngay
+                                </Button>
+                                {/* Wishlist */}
+                                <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    className="flex-grow-1"
+                                    onClick={handleAddToWishlist}
+                                >
+                                    ❤️ Thêm vào yêu thích
                                 </Button>
                             </div>
 

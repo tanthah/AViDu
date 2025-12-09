@@ -1,71 +1,86 @@
-// frontend/src/components/Header.jsx - UPDATED WITH ADMIN LINK
-import React, { useState, useEffect } from 'react';
-import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge, Image } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../redux/authSlice';
-import { fetchCart } from '../redux/cartSlice';
-import { fetchCategories } from '../redux/categorySlice';
-import './css/Header.css';
+// frontend/src/components/Header.jsx
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Container,
+  Nav,
+  Navbar,
+  NavDropdown,
+  Form,
+  Button,
+  Badge,
+  Image,
+} from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+
+import { logout } from "../redux/authSlice";
+import { fetchCart } from "../redux/cartSlice";
+import { fetchCategories } from "../redux/categorySlice";
+
+import "./css/Header.css";
 
 export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const { user, token } = useSelector((s) => s.auth);
   const { cart } = useSelector((s) => s.cart);
   const { categories } = useSelector((s) => s.category);
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const isAdmin = user?.role === 'admin';
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const isAdmin = user?.role === "admin";
+  const cartItemCount = cart?.totalQuantity || 0;
+
+  /* ---------------------- FETCH INITIAL DATA ---------------------- */
   useEffect(() => {
     dispatch(fetchCategories());
-  }, [dispatch]);
+    if (token) dispatch(fetchCart());
+  }, [token]); // <--- Không để dispatch vào dependency nữa
 
-  useEffect(() => {
-    if (token) {
-      dispatch(fetchCart());
-    }
-  }, [token, dispatch]);
-
-  const handleLogout = () => {
+  /* ---------------------- HANDLERS ---------------------- */
+  const handleLogout = useCallback(() => {
     dispatch(logout());
-    navigate('/');
-  };
+    navigate("/");
+  }, [dispatch, navigate]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${searchQuery}`);
-    }
+    if (searchQuery.trim()) navigate(`/search?q=${searchQuery}`);
   };
 
   const handleCartClick = () => {
-    if (!token) {
-      navigate('/login');
-    } else {
-      navigate('/cart');
-    }
+    navigate(token ? "/cart" : "/login");
   };
 
-  const getAvatarUrl = () => {
-    if (user?.avatar && user.avatar.includes('cloudinary.com')) {
-      return user.avatar;
-    }
-    return 'https://via.placeholder.com/40?text=U';
-  };
+  const getAvatarUrl = () =>
+    user?.avatar?.includes("cloudinary.com")
+      ? user.avatar
+      : "https://via.placeholder.com/40?text=U";
 
   const handleImageError = (e) => {
-    e.target.src = 'https://via.placeholder.com/40?text=Avatar'
-  }
+    e.target.src = "https://via.placeholder.com/40?text=Avatar";
+  };
 
-  const cartItemCount = cart?.totalQuantity || 0;
+  /* ---------------------- RENDER CATEGORY MENU ---------------------- */
+  const renderCategoryMenu = () => {
+    if (!categories?.length)
+      return <NavDropdown.Item disabled>Đang tải danh mục...</NavDropdown.Item>;
+
+    return categories.map((c) => (
+      <NavDropdown.Item key={c._id} as={Link} to={`/category/${c._id}`}>
+        <i className="bi bi-tag me-2"></i>
+        {c.name}
+      </NavDropdown.Item>
+    ));
+  };
 
   return (
     <header className="header-main">
+      {/* ---------------------- TOP BAR ---------------------- */}
       <div className="top-bar">
         <Container>
-          <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex justify-content-between">
             <div>
               <i className="bi bi-telephone-fill me-2"></i>
               Hotline: 1900 xxxx
@@ -81,61 +96,55 @@ export default function Header() {
         </Container>
       </div>
 
+      {/* ---------------------- NAVBAR ---------------------- */}
       <Navbar bg="white" expand="lg" className="shadow-sm main-navbar">
         <Container>
           <Navbar.Brand as={Link} to="/" className="brand-logo">
             <i className="bi bi-shop text-primary me-1"></i>
-            <span className="brand-text">UTE Shop</span>
+            <span className="brand-text">TV Shop</span>
           </Navbar.Brand>
 
-          <Navbar.Toggle aria-controls="main-navbar" />
-          
-          <Navbar.Collapse id="main-navbar">
+          <Navbar.Toggle />
+
+          <Navbar.Collapse>
             <Nav className="me-auto category-nav-inline">
               <Nav.Link as={Link} to="/" className="category-link">
                 <i className="bi bi-house-door me-1"></i>Trang chủ
               </Nav.Link>
-              
+
               <Nav.Link as={Link} to="/products" className="category-link">
                 <i className="bi bi-box-seam me-1"></i>Sản phẩm
               </Nav.Link>
-              
+
               <Nav.Link as={Link} to="/about" className="category-link">
                 <i className="bi bi-info-circle me-1"></i>Giới thiệu
               </Nav.Link>
-              
-              <NavDropdown 
-                title={<span><i className="bi bi-grid me-1"></i>Danh mục</span>} 
-                id="category-dropdown" 
+
+              <NavDropdown
+                title={
+                  <span>
+                    <i className="bi bi-grid me-1"></i>Danh mục
+                  </span>
+                }
+                id="category-dropdown"
                 className="category-link"
               >
-                {categories.length > 0 ? (
-                  categories.map((category) => (
-                    <NavDropdown.Item 
-                      key={category._id}
-                      as={Link} 
-                      to={`/category/${category._id}`}
-                    >
-                      <i className="bi bi-tag me-2"></i>
-                      {category.name}
-                    </NavDropdown.Item>
-                  ))
-                ) : (
-                  <NavDropdown.Item disabled>
-                    Đang tải danh mục...
-                  </NavDropdown.Item>
-                )}
+                {renderCategoryMenu()}
               </NavDropdown>
 
-              {/* ✅ ADMIN LINK */}
               {isAdmin && (
-                <Nav.Link as={Link} to="/admin/orders" className="category-link text-danger">
+                <Nav.Link
+                  as={Link}
+                  to="/admin/orders"
+                  className="category-link text-danger"
+                >
                   <i className="bi bi-shield-check me-1"></i>
                   <strong>Admin</strong>
                 </Nav.Link>
               )}
             </Nav>
 
+            {/* ---------------------- SEARCH BAR ---------------------- */}
             <Form className="search-form" onSubmit={handleSearch}>
               <div className="input-group">
                 <Form.Control
@@ -145,14 +154,18 @@ export default function Header() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="search-input"
                 />
-                <Button variant="primary" type="submit" className="search-btn">
+                <Button type="submit" className="search-btn">
                   <i className="bi bi-search"></i>
                 </Button>
               </div>
             </Form>
 
+            {/* ---------------------- RIGHT MENU ---------------------- */}
             <Nav className="ms-auto align-items-center">
-              <Nav.Link onClick={handleCartClick} className="position-relative me-3 cart-link">
+              <Nav.Link
+                onClick={handleCartClick}
+                className="position-relative me-3 cart-link"
+              >
                 <i className="bi bi-cart3 fs-5"></i>
                 <Badge bg="danger" pill className="cart-badge">
                   {cartItemCount}
@@ -160,56 +173,64 @@ export default function Header() {
               </Nav.Link>
 
               {token ? (
-                <NavDropdown 
+                <NavDropdown
                   title={
                     <div className="d-flex align-items-center">
                       <Image
                         src={getAvatarUrl()}
                         roundedCircle
-                        style={{ 
-                          width: '40px', 
-                          height: '40px', 
-                          objectFit: 'cover',
-                          marginRight: '8px',
-                          border: '2px solid #0d6efd'
-                        }}
                         onError={handleImageError}
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          objectFit: "cover",
+                          marginRight: "8px",
+                          border: "2px solid #0d6efd",
+                        }}
                       />
-                      <span className="d-none d-md-inline">{user?.name || 'User'}</span>
+                      <span className="d-none d-md-inline">
+                        {user?.name || "User"}
+                      </span>
                     </div>
                   }
-                  id="user-dropdown"
                   align="end"
-                  className="user-dropdown"
                 >
                   <NavDropdown.Item as={Link} to="/review-profile">
                     <i className="bi bi-person me-2"></i>Hồ sơ
                   </NavDropdown.Item>
+
                   <NavDropdown.Item as={Link} to="/orders">
                     <i className="bi bi-box-seam me-2"></i>Đơn hàng
                   </NavDropdown.Item>
+
                   <NavDropdown.Divider />
+
                   <NavDropdown.Item as={Link} to="/reviews">
                     <i className="bi bi-star me-2"></i>Đánh giá
                   </NavDropdown.Item>
+
                   <NavDropdown.Item as={Link} to="/wishlist">
                     <i className="bi bi-heart me-2"></i>Yêu thích
                   </NavDropdown.Item>
+
                   <NavDropdown.Item as={Link} to="/loyalty">
                     <i className="bi bi-coin me-2"></i>Điểm tích lũy
                   </NavDropdown.Item>
-                  
-                  {/* ✅ ADMIN MENU ITEM */}
+
                   {isAdmin && (
                     <>
                       <NavDropdown.Divider />
-                      <NavDropdown.Item as={Link} to="/admin/orders" className="text-danger">
+                      <NavDropdown.Item
+                        as={Link}
+                        to="/admin/orders"
+                        className="text-danger"
+                      >
                         <i className="bi bi-shield-check me-2"></i>
                         <strong>Quản lý đơn hàng</strong>
                       </NavDropdown.Item>
                     </>
                   )}
-                  
+
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất
@@ -217,10 +238,23 @@ export default function Header() {
                 </NavDropdown>
               ) : (
                 <>
-                  <Button as={Link} to="/login" variant="outline-primary" size="sm" className="me-2 rounded-pill">
+                  <Button
+                    as={Link}
+                    to="/login"
+                    variant="outline-primary"
+                    size="sm"
+                    className="me-2 rounded-pill"
+                  >
                     <i className="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
                   </Button>
-                  <Button as={Link} to="/register" variant="primary" size="sm" className="rounded-pill">
+
+                  <Button
+                    as={Link}
+                    to="/register"
+                    variant="primary"
+                    size="sm"
+                    className="rounded-pill"
+                  >
                     <i className="bi bi-person-plus me-1"></i>Đăng ký
                   </Button>
                 </>

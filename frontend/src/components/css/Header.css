@@ -9,7 +9,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 3px 0;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   position: relative;
   z-index: 1001; /* ✅ Cao hơn main-navbar */
 }
@@ -24,19 +24,20 @@
 
 .brand-logo {
   font-weight: bold !important;
-  font-size: 0.4rem !important;
+  font-size: 1.4rem !important;
+  color: rgb(144, 90, 191) !important;
   display: flex;
   align-items: center;
   padding: 1.5rem  !important;
   margin: 0.3rem !important;
   width: auto !important;
-  max-width: 160px !important;
-  max-height: 40px !important;
+  max-width: 130px !important;
+  max-height: 50px !important;
   background-color:#bee2f3 !important;
 }
 
 .brand-logo i {
-  font-size: 1.7rem !important;
+  font-size: 1.3rem !important;
   margin-right: 0.2rem !important;
 }
 
@@ -74,15 +75,15 @@
 
 .search-form {
   display: flex;
-  margin: 0 1rem;
+  margin: 0 0.5rem !important;
   width: 100%;
-  max-width: 300px;
+  max-width: 280px;
 }
 
 .search-input {
   border-radius: 20px 0 0 20px !important;
-  font-size: 0.9rem;
-  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.7rem !important;
 }
 
 .search-btn {
@@ -103,9 +104,9 @@
 .cart-badge {
   position: absolute;
   top: 0;
-  left: 100%;
+  left: 100% !important;
   transform: translate(-50%, -50%);
-  font-size: 0.7rem;
+  font-size: 0.7rem !important;
   z-index: 1;
 }
 

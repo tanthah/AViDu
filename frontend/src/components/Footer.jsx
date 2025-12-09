@@ -13,7 +13,7 @@ export default function Footer() {
           <Col md={3} sm={6} className="mb-4">
             <h5 className="footer-heading">
               <i className="bi bi-shop me-2"></i>
-              UTE Shop
+              TV Shop
             </h5>
             <p className="text-muted small">
               Hệ thống bán lẻ điện thoại, laptop, tablet và phụ kiện chính hãng uy tín hàng đầu Việt Nam.

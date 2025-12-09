@@ -73,15 +73,19 @@ function App() {
       />
 
       {/* Protected Routes - Reviews, Wishlist, Loyalty Points */}
-      <Route path="/reviews" element={token ? <Reviews /> : <Navigate to="/login" />} />
-      <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" />} />
-      <Route path="/loyalty" element={token ? <LoyaltyPoints /> : <Navigate to="/login" />} />
+      <Route 
+        path="/reviews" 
+        element={token ? <Reviews /> : <Navigate to="/login" replace />} 
+      />
+      <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" replace />} />
+      <Route path="/loyalty" element={token ? <LoyaltyPoints /> : <Navigate to="/login" replace />} />
 
       {/* ✅ ADMIN ROUTES */}
-      <Route 
-        path="/admin/orders" 
-        element={token && isAdmin ? <AdminOrders /> : <Navigate to="/" />} 
+      <Route
+        path="/admin/orders"
+        element={token ? isAdmin? <AdminOrders />: <Navigate to="/" replace />: <Navigate to="/login" replace />}
       />
+
 
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
