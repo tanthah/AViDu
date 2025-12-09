@@ -3,6 +3,8 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import './App.css'
+
+// Public Pages
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
@@ -21,8 +23,27 @@ import Reviews from './pages/Reviews'
 import Wishlist from './pages/Wishlist'
 import LoyaltyPoints from './pages/LoyaltyPoints'
 
-// ✅ ADMIN ROUTES
+// ✅ ADMIN COMPONENTS
+import AdminLayout from './components/admin/AdminLayout'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminProducts from './pages/admin/AdminProducts'
+import AdminCategories from './pages/admin/AdminCategories'
 import AdminOrders from './pages/admin/AdminOrders'
+
+// ✅ PROTECTED ROUTE COMPONENT
+function ProtectedRoute({ children, adminOnly = false }) {
+  const { token, user } = useSelector((s) => s.auth);
+  
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (adminOnly && user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+}
 
 function App() {
   const { token, user } = useSelector((s) => s.auth)
@@ -30,7 +51,9 @@ function App() {
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* ========================================
+          PUBLIC ROUTES
+      ======================================== */}
       <Route path="/" element={<Home />} />
       <Route path="/home" element={<Home />} />
       <Route path="/dashboard" element={<Home />} />
@@ -42,52 +65,82 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/product/:id" element={<ProductDetail />} />
 
-      {/* Protected Routes - Cart & Checkout */}
-      <Route 
-        path="/cart" 
-        element={token ? <Cart /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/checkout" 
-        element={token ? <Checkout /> : <Navigate to="/login" replace />} 
-      />
+      {/* ========================================
+          PROTECTED CUSTOMER ROUTES
+      ======================================== */}
+      <Route path="/cart" element={
+        <ProtectedRoute>
+          <Cart />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/checkout" element={
+        <ProtectedRoute>
+          <Checkout />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/orders" element={
+        <ProtectedRoute>
+          <Orders />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/orders/:orderId" element={
+        <ProtectedRoute>
+          <OrderDetail />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/review-profile" element={
+        <ProtectedRoute>
+          <ReviewProfile />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/edit-profile" element={
+        <ProtectedRoute>
+          <EditProfile />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/reviews" element={
+        <ProtectedRoute>
+          <Reviews />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/wishlist" element={
+        <ProtectedRoute>
+          <Wishlist />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/loyalty" element={
+        <ProtectedRoute>
+          <LoyaltyPoints />
+        </ProtectedRoute>
+      } />
 
-      {/* Protected Routes - Orders */}
-      <Route 
-        path="/orders" 
-        element={token ? <Orders /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/orders/:orderId" 
-        element={token ? <OrderDetail /> : <Navigate to="/login" replace />} 
-      />
+      {/* ========================================
+          ADMIN ROUTES
+      ======================================== */}
+      <Route path="/admin" element={
+        <ProtectedRoute adminOnly={true}>
+          <AdminLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="orders" element={<AdminOrders />} />
+        {/* Add more admin routes here */}
+      </Route>
 
-      {/* Protected Routes - Profile */}
-      <Route 
-        path="/review-profile" 
-        element={token ? <ReviewProfile /> : <Navigate to="/login" replace />} 
-      />
-      <Route 
-        path="/edit-profile" 
-        element={token ? <EditProfile /> : <Navigate to="/login" replace />} 
-      />
-
-      {/* Protected Routes - Reviews, Wishlist, Loyalty Points */}
-      <Route 
-        path="/reviews" 
-        element={token ? <Reviews /> : <Navigate to="/login" replace />} 
-      />
-      <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" replace />} />
-      <Route path="/loyalty" element={token ? <LoyaltyPoints /> : <Navigate to="/login" replace />} />
-
-      {/* ✅ ADMIN ROUTES */}
-      <Route
-        path="/admin/orders"
-        element={token ? isAdmin? <AdminOrders />: <Navigate to="/" replace />: <Navigate to="/login" replace />}
-      />
-
-
-      {/* Fallback Route */}
+      {/* ========================================
+          FALLBACK ROUTE
+      ======================================== */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
