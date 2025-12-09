@@ -1,10 +1,11 @@
+// frontend/src/components/Header.jsx - UPDATED WITH ADMIN LINK
 import React, { useState, useEffect } from 'react';
 import { Container, Nav, Navbar, NavDropdown, Form, Button, Badge, Image } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice';
 import { fetchCart } from '../redux/cartSlice';
-import { fetchCategories } from '../redux/categorySlice'; // ✅ ADD
+import { fetchCategories } from '../redux/categorySlice';
 import './css/Header.css';
 
 export default function Header() {
@@ -12,15 +13,15 @@ export default function Header() {
   const dispatch = useDispatch();
   const { user, token } = useSelector((s) => s.auth);
   const { cart } = useSelector((s) => s.cart);
-  const { categories } = useSelector((s) => s.category); // ✅ ADD
+  const { categories } = useSelector((s) => s.category);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // ✅ Fetch categories on mount
+  const isAdmin = user?.role === 'admin';
+
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
-  // ✅ Fetch cart khi user đăng nhập
   useEffect(() => {
     if (token) {
       dispatch(fetchCart());
@@ -103,7 +104,6 @@ export default function Header() {
                 <i className="bi bi-info-circle me-1"></i>Giới thiệu
               </Nav.Link>
               
-              {/* ✅ DYNAMIC CATEGORIES DROPDOWN */}
               <NavDropdown 
                 title={<span><i className="bi bi-grid me-1"></i>Danh mục</span>} 
                 id="category-dropdown" 
@@ -126,6 +126,14 @@ export default function Header() {
                   </NavDropdown.Item>
                 )}
               </NavDropdown>
+
+              {/* ✅ ADMIN LINK */}
+              {isAdmin && (
+                <Nav.Link as={Link} to="/admin/orders" className="category-link text-danger">
+                  <i className="bi bi-shield-check me-1"></i>
+                  <strong>Admin</strong>
+                </Nav.Link>
+              )}
             </Nav>
 
             <Form className="search-form" onSubmit={handleSearch}>
@@ -190,6 +198,19 @@ export default function Header() {
                   <NavDropdown.Item as={Link} to="/loyalty">
                     <i className="bi bi-coin me-2"></i>Điểm tích lũy
                   </NavDropdown.Item>
+                  
+                  {/* ✅ ADMIN MENU ITEM */}
+                  {isAdmin && (
+                    <>
+                      <NavDropdown.Divider />
+                      <NavDropdown.Item as={Link} to="/admin/orders" className="text-danger">
+                        <i className="bi bi-shield-check me-2"></i>
+                        <strong>Quản lý đơn hàng</strong>
+                      </NavDropdown.Item>
+                    </>
+                  )}
+                  
+                  <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout}>
                     <i className="bi bi-box-arrow-right me-2"></i>Đăng xuất
                   </NavDropdown.Item>

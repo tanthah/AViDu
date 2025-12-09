@@ -1,4 +1,4 @@
-// frontend/src/App.jsx - WITH CATEGORY ROUTE
+// frontend/src/App.jsx - UPDATED WITH ADMIN ROUTES
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -11,7 +11,7 @@ import ReviewProfile from './pages/ReviewProfile.jsx'
 import EditProfile from './pages/EditProfile.jsx'
 import ProductDetail from './pages/ProductDetail.jsx'
 import Products from './pages/Products.jsx'
-import CategoryProducts from './pages/CategoryProducts.jsx' // ✅ ADD
+import CategoryProducts from './pages/CategoryProducts.jsx'
 import About from './pages/About.jsx'
 import Cart from './pages/Cart.jsx'
 import Checkout from './pages/Checkout.jsx'
@@ -21,8 +21,12 @@ import Reviews from './pages/Reviews'
 import Wishlist from './pages/Wishlist'
 import LoyaltyPoints from './pages/LoyaltyPoints'
 
+// ✅ ADMIN ROUTES
+import AdminOrders from './pages/admin/AdminOrders'
+
 function App() {
-  const token = useSelector((s) => s.auth.token)
+  const { token, user } = useSelector((s) => s.auth)
+  const isAdmin = user?.role === 'admin'
 
   return (
     <Routes>
@@ -31,7 +35,7 @@ function App() {
       <Route path="/home" element={<Home />} />
       <Route path="/dashboard" element={<Home />} />
       <Route path="/products" element={<Products />} />
-      <Route path="/category/:categoryId" element={<CategoryProducts />} /> {/* ✅ ADD */}
+      <Route path="/category/:categoryId" element={<CategoryProducts />} />
       <Route path="/about" element={<About />} />
       <Route path="/login" element={token ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/register" element={token ? <Navigate to="/" replace /> : <Register />} />
@@ -72,6 +76,12 @@ function App() {
       <Route path="/reviews" element={token ? <Reviews /> : <Navigate to="/login" />} />
       <Route path="/wishlist" element={token ? <Wishlist /> : <Navigate to="/login" />} />
       <Route path="/loyalty" element={token ? <LoyaltyPoints /> : <Navigate to="/login" />} />
+
+      {/* ✅ ADMIN ROUTES */}
+      <Route 
+        path="/admin/orders" 
+        element={token && isAdmin ? <AdminOrders /> : <Navigate to="/" />} 
+      />
 
       {/* Fallback Route */}
       <Route path="*" element={<Navigate to="/" replace />} />

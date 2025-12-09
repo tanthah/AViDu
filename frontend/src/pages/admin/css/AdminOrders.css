@@ -1,0 +1,88 @@
+/* frontend/src/pages/admin/css/AdminOrders.css */
+
+.admin-orders-page {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.admin-orders-page h2 {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.order-filters {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.order-filters .nav-link {
+  color: #6c757d;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  margin-right: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.order-filters .nav-link:hover {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.order-filters .nav-link.active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.admin-orders-page .table {
+  font-size: 0.9rem;
+}
+
+.admin-orders-page .table thead {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.admin-orders-page .table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.admin-orders-page .table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.admin-orders-page .badge {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Modal Styles */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.modal-title {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-filters {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .order-filters .nav-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .admin-orders-page .table {
+    font-size: 0.8rem;
+  }
+}
