@@ -1,8 +1,9 @@
-// backend/src/routes/productRoutes.js - UPDATED
+// backend/src/routes/productRoutes.js - UPDATED WITH SEARCH
 import express from 'express'
 import {
     getAllProducts,
-    getAllProductsWithPagination, // ✅ NEW
+    getAllProductsWithPagination,
+    searchProducts, // ✅ NEW
     getProductDetail,
     getBestSellingProducts,
     getNewestProducts,
@@ -17,7 +18,8 @@ const router = express.Router()
 
 // Public routes
 router.get('/', getAllProducts) // Simple all products
-router.get('/paginated', getAllProductsWithPagination) // ✅ NEW: Lazy loading
+router.get('/paginated', getAllProductsWithPagination) // ✅ Lazy loading with search
+router.get('/search', searchProducts) // ✅ NEW: Advanced search
 router.get('/best-selling', getBestSellingProducts)
 router.get('/newest', getNewestProducts)
 router.get('/most-viewed', getMostViewedProducts)
