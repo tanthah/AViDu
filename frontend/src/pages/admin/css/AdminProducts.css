@@ -1,8 +1,9 @@
-/* frontend/src/pages/admin/css/AdminProducts.css & AdminCategories.css */
+/* frontend/src/pages/admin/css/AdminProducts.css - FIXED */
 
 .admin-products,
 .admin-categories {
   padding: 0;
+  max-width: 100%; /* ✅ Prevent overflow */
 }
 
 .page-header {
@@ -13,6 +14,9 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+  /* ✅ Consistent width */
+  width: 100%;
 }
 
 .page-header h2 {
@@ -32,11 +36,15 @@
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   overflow: hidden;
+  /* ✅ Consistent width */
+  width: 100%;
+  margin-bottom: 0;
 }
 
 /* Table Styles */
 .table {
   margin: 0;
+  width: 100%; /* ✅ Full width */
 }
 
 .table thead {
@@ -49,6 +57,7 @@
   font-weight: 600;
   font-size: 0.875rem;
   padding: 1rem;
+  white-space: nowrap; /* ✅ Prevent wrapping */
 }
 
 .table tbody td {
@@ -72,6 +81,7 @@
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
+  display: block; /* ✅ Prevent inline spacing */
 }
 
 .category-thumb.no-image {
@@ -87,10 +97,12 @@
 .btn-group-actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: nowrap; /* ✅ Keep buttons in one line */
 }
 
 .btn-group-actions .btn {
   padding: 0.375rem 0.75rem;
+  white-space: nowrap;
 }
 
 /* Modal Styles */
@@ -106,6 +118,8 @@
 
 .modal-body {
   padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .modal-footer {
@@ -161,6 +175,11 @@
   border-color: #22c55e;
 }
 
+/* Empty State */
+.text-center.py-4 {
+  padding: 3rem 0 !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .page-header {
@@ -180,5 +199,13 @@
   
   .btn-group-actions .btn {
     width: 100%;
+  }
+  
+  /* Make table scrollable on mobile */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

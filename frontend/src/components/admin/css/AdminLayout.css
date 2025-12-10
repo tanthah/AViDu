@@ -1,4 +1,4 @@
-/* frontend/src/components/admin/css/AdminLayout.css */
+/* frontend/src/components/admin/css/AdminLayout.css - FIXED */
 .admin-layout {
   display: flex;
   min-height: 100vh;
@@ -188,15 +188,20 @@
   display: none;
 }
 
-/* Main Content */
+/* Main Content - FIXED WIDTH */
 .admin-main {
   flex: 1;
   margin-left: 260px;
   transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: calc(100% - 260px); /* ✅ Fixed width calculation */
 }
 
 .collapsed + .admin-main {
   margin-left: 70px;
+  width: calc(100% - 70px); /* ✅ Fixed width calculation */
 }
 
 .admin-topbar {
@@ -209,6 +214,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  /* ✅ Prevent width changes */
+  min-height: 80px;
 }
 
 .page-title h1 {
@@ -243,6 +250,15 @@
 
 .admin-content {
   padding: 2rem;
+  flex: 1;
+  /* ✅ Prevent content overflow */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* ✅ Ensure all cards maintain consistent width */
+.admin-content > * {
+  max-width: 100%;
 }
 
 /* Responsive */
@@ -253,6 +269,7 @@
   
   .admin-main {
     margin-left: 70px;
+    width: calc(100% - 70px);
   }
   
   .brand span,

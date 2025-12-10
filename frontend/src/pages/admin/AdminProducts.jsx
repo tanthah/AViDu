@@ -1,8 +1,8 @@
-// frontend/src/pages/admin/AdminProducts.jsx
+// frontend/src/pages/admin/AdminProducts.jsx - FIXED
 import React, { useEffect, useState } from 'react';
 import { Button, Modal, Form, Table, Badge, Spinner, Alert } from 'react-bootstrap';
 import adminProductApi from '../../api/admin/adminProductApi';
-import categoryApi from '../../api/admin/adminCategoryApi';
+import adminCategoryApi from '../../api/admin/adminCategoryApi';
 import MediaUpload from '../../components/admin/MediaUpload';
 import './css/AdminProducts.css';
 
@@ -41,11 +41,16 @@ export default function AdminProducts() {
       setLoading(true);
       const [productsRes, categoriesRes] = await Promise.all([
         adminProductApi.getAllProducts(),
-        categoryApi.getAll()
+        adminCategoryApi.getAllCategories() // ✅ Fixed: use correct API
       ]);
-      setProducts(productsRes.data.products);
-      setCategories(categoriesRes.data.categories);
+      
+      console.log('Products:', productsRes.data);
+      console.log('Categories:', categoriesRes.data);
+      
+      setProducts(productsRes.data.products || []);
+      setCategories(categoriesRes.data.categories || []);
     } catch (err) {
+      console.error('Load data error:', err);
       setError(err.response?.data?.message || 'Lỗi khi tải dữ liệu');
     } finally {
       setLoading(false);
@@ -85,6 +90,7 @@ export default function AdminProducts() {
       setMedia([]);
     }
     setShowModal(true);
+    setError(null);
   };
 
   const handleCloseModal = () => {
@@ -172,6 +178,7 @@ export default function AdminProducts() {
       handleCloseModal();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
+      console.error('Submit error:', err);
       setError(err.response?.data?.message || 'Lỗi khi lưu sản phẩm');
     } finally {
       setSubmitting(false);
@@ -212,7 +219,7 @@ export default function AdminProducts() {
   return (
     <div className="admin-products">
       {/* Header */}
-      <div className="page-header mb-4">
+      <div className="page-header">
         <div>
           <h2>Quản lý sản phẩm</h2>
           <p className="text-muted">Tổng số: {products.length} sản phẩm</p>
@@ -237,87 +244,103 @@ export default function AdminProducts() {
 
       {/* Products Table */}
       <div className="card">
-        <Table responsive hover>
-          <thead>
-            <tr>
-              <th style={{ width: '80px' }}>Hình ảnh</th>
-              <th>Tên sản phẩm</th>
-              <th>Danh mục</th>
-              <th>Giá</th>
-              <th>Giảm giá</th>
-              <th>Tồn kho</th>
-              <th>Trạng thái</th>
-              <th style={{ width: '150px' }}>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map(product => (
-              <tr key={product._id}>
-                <td>
-                  <img 
-                    src={product.images?.[0] || '/placeholder.jpg'} 
-                    alt={product.name}
-                    className="product-thumb"
-                  />
-                </td>
-                <td>
-                  <strong>{product.name}</strong>
-                  <br />
-                  <small className="text-muted">{product.brand}</small>
-                </td>
-                <td>{product.categoryId?.name}</td>
-                <td>
-                  <strong className="text-danger">
-                    {product.finalPrice?.toLocaleString('vi-VN')}đ
-                  </strong>
-                  {product.discount > 0 && (
-                    <>
-                      <br />
-                      <small className="text-muted text-decoration-line-through">
-                        {product.price?.toLocaleString('vi-VN')}đ
-                      </small>
-                    </>
-                  )}
-                </td>
-                <td>
-                  {product.discount > 0 && (
-                    <Badge bg="danger">-{product.discount}%</Badge>
-                  )}
-                </td>
-                <td>
-                  <Badge bg={product.stock > 0 ? 'success' : 'danger'}>
-                    {product.stock}
-                  </Badge>
-                </td>
-                <td>
-                  <Form.Check
-                    type="switch"
-                    checked={product.isActive}
-                    onChange={() => handleToggleStatus(product._id)}
-                  />
-                </td>
-                <td>
-                  <div className="btn-group-actions">
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      onClick={() => handleOpenModal(product)}
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDelete(product._id)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </Button>
-                  </div>
-                </td>
+        <div className="table-responsive">
+          <Table hover>
+            <thead>
+              <tr>
+                <th style={{ width: '80px' }}>Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th>Danh mục</th>
+                <th>Giá</th>
+                <th>Giảm giá</th>
+                <th>Tồn kho</th>
+                <th>Trạng thái</th>
+                <th style={{ width: '150px' }}>Thao tác</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="text-center py-4">
+                    Chưa có sản phẩm nào
+                  </td>
+                </tr>
+              ) : (
+                products.map(product => (
+                  <tr key={product._id}>
+                    <td>
+                      <img 
+                        src={product.images?.[0] || '/placeholder.jpg'} 
+                        alt={product.name}
+                        className="product-thumb"
+                      />
+                    </td>
+                    <td>
+                      <strong>{product.name}</strong>
+                      <br />
+                      <small className="text-muted">{product.brand}</small>
+                    </td>
+                    <td>
+                      <Badge bg="secondary">
+                        {product.categoryId?.name || 'N/A'}
+                      </Badge>
+                    </td>
+                    <td>
+                      <strong className="text-danger">
+                        {product.finalPrice?.toLocaleString('vi-VN')}đ
+                      </strong>
+                      {product.discount > 0 && (
+                        <>
+                          <br />
+                          <small className="text-muted text-decoration-line-through">
+                            {product.price?.toLocaleString('vi-VN')}đ
+                          </small>
+                        </>
+                      )}
+                    </td>
+                    <td>
+                      {product.discount > 0 && (
+                        <Badge bg="danger">-{product.discount}%</Badge>
+                      )}
+                    </td>
+                    <td>
+                      <Badge bg={product.stock > 0 ? 'success' : 'danger'}>
+                        {product.stock}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Form.Check
+                        type="switch"
+                        checked={product.isActive}
+                        onChange={() => handleToggleStatus(product._id)}
+                      />
+                    </td>
+                    <td>
+                      <div className="btn-group-actions">
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={() => handleOpenModal(product)}
+                          title="Sửa"
+                        >
+                          <i className="bi bi-pencil"></i>
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDelete(product._id)}
+                          title="Xóa"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
       </div>
 
       {/* Product Form Modal */}
@@ -435,6 +458,12 @@ export default function AdminProducts() {
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </Form.Select>
+                  {categories.length === 0 && (
+                    <Form.Text className="text-warning">
+                      <i className="bi bi-exclamation-triangle me-1"></i>
+                      Chưa có danh mục nào. Vui lòng tạo danh mục trước.
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </div>
               <div className="col-md-6">
@@ -461,7 +490,7 @@ export default function AdminProducts() {
             />
 
             {/* Status */}
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-3 mt-4">
               <Form.Check
                 type="switch"
                 name="isActive"
