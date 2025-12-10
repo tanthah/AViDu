@@ -1,4 +1,4 @@
-// frontend/src/components/Header.jsx
+// frontend/src/components/Header.jsx - UPDATED
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
@@ -15,7 +15,6 @@ import { useSelector, useDispatch } from "react-redux";
 
 import { logout } from "../redux/authSlice";
 import { fetchCart } from "../redux/cartSlice";
-import { fetchCategories } from "../redux/categorySlice";
 
 import "./css/Header.css";
 
@@ -25,7 +24,6 @@ export default function Header() {
 
   const { user, token } = useSelector((s) => s.auth);
   const { cart } = useSelector((s) => s.cart);
-  const { categories } = useSelector((s) => s.category);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -34,9 +32,8 @@ export default function Header() {
 
   /* ---------------------- FETCH INITIAL DATA ---------------------- */
   useEffect(() => {
-    dispatch(fetchCategories());
     if (token) dispatch(fetchCart());
-  }, []); // <--- Không để dispatch vào dependency nữa
+  }, [token, dispatch]);
 
   /* ---------------------- HANDLERS ---------------------- */
   const handleLogout = useCallback(() => {
@@ -46,7 +43,10 @@ export default function Header() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) navigate(`/search?q=${searchQuery}`);
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
   };
 
   const handleCartClick = () => {
@@ -56,23 +56,10 @@ export default function Header() {
   const getAvatarUrl = () =>
     user?.avatar?.includes("cloudinary.com")
       ? user.avatar
-      : "https://via.placeholder.com/40?text=U";
+      : "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.name || "User") + "&background=667eea&color=fff&size=40";
 
   const handleImageError = (e) => {
-    e.target.src = "https://via.placeholder.com/40?text=Avatar";
-  };
-
-  /* ---------------------- RENDER CATEGORY MENU ---------------------- */
-  const renderCategoryMenu = () => {
-    if (!categories?.length)
-      return <NavDropdown.Item disabled>Đang tải danh mục...</NavDropdown.Item>;
-
-    return categories.map((c) => (
-      <NavDropdown.Item key={c._id} as={Link} to={`/category/${c._id}`}>
-        <i className="bi bi-tag me-2"></i>
-        {c.name}
-      </NavDropdown.Item>
-    ));
+    e.target.src = "https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=40";
   };
 
   return (
@@ -86,7 +73,7 @@ export default function Header() {
               Hotline: 1900 xxxx
               <span className="mx-3">|</span>
               <i className="bi bi-envelope-fill me-2"></i>
-              support@uteshop.com
+              support@tvshop.com
             </div>
             <div>
               <i className="bi bi-truck me-2"></i>
@@ -107,6 +94,7 @@ export default function Header() {
           <Navbar.Toggle />
 
           <Navbar.Collapse>
+            {/* ---------------------- NAVIGATION LINKS ---------------------- */}
             <Nav className="me-auto category-nav-inline">
               <Nav.Link as={Link} to="/" className="category-link">
                 <i className="bi bi-house-door me-1"></i>Trang chủ
@@ -119,19 +107,6 @@ export default function Header() {
               <Nav.Link as={Link} to="/about" className="category-link">
                 <i className="bi bi-info-circle me-1"></i>Giới thiệu
               </Nav.Link>
-
-              <NavDropdown
-                title={
-                  <span>
-                    <i className="bi bi-grid me-1"></i>Danh mục
-                  </span>
-                }
-                id="category-dropdown"
-                className="category-link"
-              >
-                {renderCategoryMenu()}
-              </NavDropdown>
-              
             </Nav>
 
             {/* ---------------------- SEARCH BAR ---------------------- */}
@@ -157,9 +132,11 @@ export default function Header() {
                 className="position-relative me-3 cart-link"
               >
                 <i className="bi bi-cart3 fs-5"></i>
-                <Badge bg="danger" pill className="cart-badge">
-                  {cartItemCount}
-                </Badge>
+                {cartItemCount > 0 && (
+                  <Badge bg="danger" pill className="cart-badge">
+                    {cartItemCount}
+                  </Badge>
+                )}
               </Nav.Link>
 
               {token ? (
@@ -170,20 +147,15 @@ export default function Header() {
                         src={getAvatarUrl()}
                         roundedCircle
                         onError={handleImageError}
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          objectFit: "cover",
-                          marginRight: "8px",
-                          border: "2px solid #0d6efd",
-                        }}
+                        className="user-avatar"
                       />
-                      <span className="d-none d-md-inline">
+                      <span className="user-name d-none d-lg-inline">
                         {user?.name || "User"}
                       </span>
                     </div>
                   }
                   align="end"
+                  className="user-dropdown"
                 >
                   <NavDropdown.Item as={Link} to="/review-profile">
                     <i className="bi bi-person me-2"></i>Hồ sơ
@@ -212,11 +184,11 @@ export default function Header() {
                       <NavDropdown.Divider />
                       <NavDropdown.Item
                         as={Link}
-                        to="/admin/orders"
+                        to="/admin/dashboard"
                         className="text-danger"
                       >
                         <i className="bi bi-shield-check me-2"></i>
-                        <strong>Quản lý đơn hàng</strong>
+                        <strong>Quản trị</strong>
                       </NavDropdown.Item>
                     </>
                   )}
@@ -227,13 +199,13 @@ export default function Header() {
                   </NavDropdown.Item>
                 </NavDropdown>
               ) : (
-                <>
+                <div className="auth-buttons">
                   <Button
                     as={Link}
                     to="/login"
                     variant="outline-primary"
                     size="sm"
-                    className="me-2 rounded-pill"
+                    className="rounded-pill"
                   >
                     <i className="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
                   </Button>
@@ -247,7 +219,7 @@ export default function Header() {
                   >
                     <i className="bi bi-person-plus me-1"></i>Đăng ký
                   </Button>
-                </>
+                </div>
               )}
             </Nav>
           </Navbar.Collapse>
